@@ -1,0 +1,152 @@
+<div class="inbox-container">
+  <!-- Header -->
+  <header class="inbox-header">
+    <div class="header-left">
+      <h1>📧 Inbox</h1>
+      <span class="email-count">{{ getFilteredEmails().length }} emails</span>
+    </div>
+    <div class="header-right">
+      <button class="compose-btn" (click)="composeEmail()">✎ Compose</button>
+      <div class="user-menu">
+        <div class="user-name">{{ currentUser() }}</div>
+        <button class="logout-btn" (click)="logout()" title="Logout">↓</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="inbox-content">
+    <!-- Sidebar with folders -->
+    <aside class="sidebar">
+      <nav class="folders">
+        <div class="folder-section">
+          <div class="folder-item active">
+            <span class="folder-icon">📥</span>
+            <span class="folder-name">Inbox</span>
+            <span class="folder-count">{{ getFilteredEmails().length }}</span>
+          </div>
+          <div class="folder-item">
+            <span class="folder-icon">⭐</span>
+            <span class="folder-name">Starred</span>
+            <span class="folder-count">3</span>
+          </div>
+          <div class="folder-item">
+            <span class="folder-icon">✏️</span>
+            <span class="folder-name">Drafts</span>
+            <span class="folder-count">1</span>
+          </div>
+          <div class="folder-item">
+            <span class="folder-icon">✓</span>
+            <span class="folder-name">Sent</span>
+            <span class="folder-count">24</span>
+          </div>
+          <div class="folder-item">
+            <span class="folder-icon">🔗</span>
+            <span class="folder-name">All Mail</span>
+            <span class="folder-count">247</span>
+          </div>
+        </div>
+        <div class="folder-section">
+          <div class="section-title">Labels</div>
+          <div class="folder-item">
+            <span class="folder-icon">🏷️</span>
+            <span class="folder-name">Work</span>
+            <span class="folder-count">12</span>
+          </div>
+          <div class="folder-item">
+            <span class="folder-icon">🏷️</span>
+            <span class="folder-name">Personal</span>
+            <span class="folder-count">8</span>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main email list -->
+    <main class="email-list-section">
+      <!-- Search bar -->
+      <div class="search-bar">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search emails..."
+          class="search-input"
+        />
+        <span class="search-icon">🔍</span>
+      </div>
+
+      <!-- Email list -->
+      <div class="email-list">
+        @if (getFilteredEmails().length === 0) {
+          <div class="empty-state">
+            <p>No emails found</p>
+            <button class="btn-primary" (click)="composeEmail()">Compose New Email</button>
+          </div>
+        } @else {
+          @for (email of getFilteredEmails(); track email.id) {
+            <div
+              class="email-item"
+              [class.unread]="!email.isRead"
+              (click)="selectEmail(email)"
+            >
+              <div class="email-avatar">{{ email.avatar }}</div>
+              <div class="email-content">
+                <div class="email-header">
+                  <span class="email-from">{{ email.from }}</span>
+                  <span class="email-date">{{ email.date }}</span>
+                </div>
+                <div class="email-subject">{{ email.subject }}</div>
+                <div class="email-preview">{{ email.preview }}</div>
+              </div>
+              @if (!email.isRead) {
+                <div class="unread-indicator"></div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </main>
+
+    <!-- Email detail view -->
+    @if (selectedEmail(); as email) {
+      <div class="email-detail-panel">
+        <div class="detail-header">
+          <button class="close-btn" (click)="closeEmail()">✕</button>
+          <div class="detail-actions">
+            <button class="icon-btn" title="Delete">🗑️</button>
+            <button class="icon-btn" title="Archive">📦</button>
+            <button class="icon-btn" title="Mark as spam">⚠️</button>
+          </div>
+        </div>
+
+        <div class="detail-content">
+          <div class="detail-from">
+            <div class="detail-avatar">{{ email.avatar }}</div>
+            <div class="detail-sender-info">
+              <div class="sender-name">{{ email.from }}</div>
+              <div class="sender-email">{{ email.from }}</div>
+            </div>
+            <div class="detail-date">{{ email.date }}</div>
+          </div>
+
+          <div class="detail-subject">{{ email.subject }}</div>
+
+          <div class="detail-body">
+            <p>
+              {{ email.preview }}
+            </p>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+            </p>
+          </div>
+
+          <div class="detail-footer">
+            <button class="btn-secondary">Reply</button>
+            <button class="btn-secondary">Reply All</button>
+            <button class="btn-secondary">Forward</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
