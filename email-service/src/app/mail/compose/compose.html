@@ -1,0 +1,98 @@
+<div class="compose-container">
+  <!-- Header -->
+  <header class="compose-header">
+    <div class="header-left">
+      <h1>✉️ Compose</h1>
+      <span class="compose-subtitle">New email</span>
+    </div>
+
+    <div class="header-right">
+      <button class="close-btn" (click)="closeCompose()">✕</button>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <form class="compose-content" (ngSubmit)="sendEmail()" #form="ngForm">
+    <div class="compose-fields">
+      <div class="field">
+        <label>To</label>
+        <input
+          type="email"
+          required
+          name="to"
+          [(ngModel)]="compose.to"
+          placeholder="recipient@example.com"
+        />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>CC</label>
+          <input
+            type="text"
+            name="cc"
+            [(ngModel)]="compose.cc"
+            placeholder="cc@example.com"
+          />
+        </div>
+
+        <div class="field">
+          <label>BCC</label>
+          <input
+            type="text"
+            name="bcc"
+            [(ngModel)]="compose.bcc"
+            placeholder="bcc@example.com"
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Subject</label>
+        <input
+          type="text"
+          name="subject"
+          [(ngModel)]="compose.subject"
+          placeholder="Subject"
+        />
+      </div>
+
+      <div class="field">
+        <label>Message</label>
+        <textarea
+          rows="10"
+          name="body"
+          [(ngModel)]="compose.body"
+          placeholder="Write your message..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="compose-footer">
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="form.invalid"
+      >
+        Send
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="saveDraft()"
+      >
+        Save Draft
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="closeCompose()"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>
