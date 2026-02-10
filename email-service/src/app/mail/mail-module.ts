@@ -50,11 +50,16 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
 import { InboxComponent } from './inbox/inbox';
+import { ComposeComponent } from './compose/compose';
 
 const routes: Routes = [
   {
     path: 'inbox',
     component: InboxComponent
+  },
+  {
+    path: 'compose',
+    component: ComposeComponent
   },
   {
     path: '',
