@@ -135,6 +135,10 @@ export class InboxComponent implements OnInit {
     this.router.navigate(['/mail/compose']);
   }
 
+  addAlert() {
+    this.router.navigate(['/alert']);
+  }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);

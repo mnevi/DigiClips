@@ -19,6 +19,7 @@
 
 import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login';
+import { AlertComponent } from './auth/alert/alert';
 import { AuthGuard } from './core/guards/auth-guard';
 
 export const routes: Routes = [
@@ -31,6 +32,8 @@ export const routes: Routes = [
     canActivate: [AuthGuard], // Guard prevents unauthorized access
     loadChildren: () => import('./mail/mail-module').then(m => m.MailModule) // Lazy load module
   },
+
+  { path: 'alert', component: AlertComponent},
   
   // Default route: Redirect root to /mail (authenticated users)
   { path: '', redirectTo: 'mail', pathMatch: 'full' }
