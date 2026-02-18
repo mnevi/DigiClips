@@ -1,11 +1,12 @@
 /**
  * Inbox Component
  *
- * Main email inbox view displaying a list of emails with:
- * - Email list with senders and previews
- * - Compose button for new emails
- * - Search and filter functionality
- * - Responsive design for mobile and desktop
+ * Main email inbox with a sleek modern design featuring:
+ * - Email list with multiple folders (inbox, starred, drafts, sent)
+ * - Label creation and management
+ * - Search and filtering
+ * - Email operations (flag, delete, archive)
+ * - Integration with email service
  */
 
 import { Component, OnInit, signal } from '@angular/core';
@@ -13,16 +14,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
+import { EmailService, Email, Draft, Label } from '../../core/services/email';
 
-interface Email {
-  id: number;
-  from: string;
-  subject: string;
-  preview: string;
-  date: string;
-  isRead: boolean;
-  avatar: string;
-}
+type FolderType = 'inbox' | 'starred' | 'drafts' | 'sent';
 
 @Component({
   selector: 'app-inbox',
@@ -33,88 +27,77 @@ interface Email {
 })
 export class InboxComponent implements OnInit {
   emails = signal<Email[]>([]);
+  drafts = signal<Draft[]>([]);
+  sentEmails = signal<Email[]>([]);
+  labels = signal<Label[]>([]);
+  
   searchQuery = '';
   currentUser = signal<string>('');
   selectedEmail = signal<Email | null>(null);
+  currentFolder = signal<FolderType>('inbox');
+  
+  showNewLabelDialog = signal(false);
+  newLabelName = '';
+  newLabelColor = '#667eea';
+  newLabelIcon = '🏷️';
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private emailService: EmailService
   ) {
     this.currentUser.set(this.authService.getCurrentUser() || 'User');
   }
 
   ngOnInit() {
-    this.loadEmails();
+    this.loadData();
   }
 
-  loadEmails() {
-    // Mock email data
-    const mockEmails: Email[] = [
-      {
-        id: 1,
-        from: 'john@example.com',
-        subject: 'Project Update - Q1 2026',
-        preview: 'Great progress on the new email service. The UI components are looking excellent...',
-        date: 'Today 10:30 AM',
-        isRead: false,
-        avatar: 'JO'
-      },
-      {
-        id: 2,
-        from: 'sarah@company.com',
-        subject: 'Meeting Scheduled - Next Week',
-        preview: 'Following up on our earlier discussion. I\'ve scheduled the team meeting for next Wednesday...',
-        date: 'Yesterday 2:45 PM',
-        isRead: true,
-        avatar: 'SA'
-      },
-      {
-        id: 3,
-        from: 'team@project.dev',
-        subject: 'Weekly Digest - Development Update',
-        preview: 'This week\'s development summary: 15 pull requests merged, 23 issues closed, and 5...',
-        date: 'Feb 2, 2:15 PM',
-        isRead: true,
-        avatar: 'PD'
-      },
-      {
-        id: 4,
-        from: 'notifications@service.com',
-        subject: 'System Maintenance Notice',
-        preview: 'Scheduled maintenance will occur on February 5th from 2:00 AM to 4:00 AM UTC...',
-        date: 'Feb 2, 9:30 AM',
-        isRead: true,
-        avatar: 'NO'
-      },
-      {
-        id: 5,
-        from: 'michael@tech.com',
-        subject: 'Code Review Request',
-        preview: 'Please review the authentication module. I\'ve implemented several security improvements...',
-        date: 'Feb 1, 4:20 PM',
-        isRead: true,
-        avatar: 'MI'
-      },
-      {
-        id: 6,
-        from: 'design@studio.io',
-        subject: 'New Design Mockups Ready',
-        preview: 'The new dashboard designs are complete. I\'ve uploaded them to the shared folder...',
-        date: 'Jan 31, 11:00 AM',
-        isRead: true,
-        avatar: 'DE'
+  /**
+   * Load all data from service
+   */
+  loadData() {
+    this.emails.set(this.emailService.getEmails()());
+    this.drafts.set(this.emailService.getDrafts()());
+    this.labels.set(this.emailService.getLabels()());
+    this.loadSentEmails();
+  }
+
+  /**
+   * Load sent emails from localStorage
+   */
+  loadSentEmails() {
+    const savedSent = localStorage.getItem('email-sent');
+    if (savedSent) {
+      try {
+        this.sentEmails.set(JSON.parse(savedSent));
+      } catch (e) {
+        this.sentEmails.set([]);
       }
-    ];
-    this.emails.set(mockEmails);
+    }
   }
 
+  /**
+   * Get filtered emails based on current folder and search
+   */
   getFilteredEmails(): Email[] {
-    if (!this.searchQuery) {
-      return this.emails();
+    const folder = this.currentFolder();
+    let folderEmails: Email[] = [];
+
+    if (folder === 'inbox') {
+      folderEmails = this.emails();
+    } else if (folder === 'starred') {
+      folderEmails = this.emails().filter(e => e.isFlagged);
+    } else if (folder === 'sent') {
+      folderEmails = this.sentEmails();
     }
+
+    if (!this.searchQuery) {
+      return folderEmails;
+    }
+
     const query = this.searchQuery.toLowerCase();
-    return this.emails().filter(
+    return folderEmails.filter(
       email =>
         email.from.toLowerCase().includes(query) ||
         email.subject.toLowerCase().includes(query) ||
@@ -122,38 +105,201 @@ export class InboxComponent implements OnInit {
     );
   }
 
+  /**
+   * Get filtered drafts based on search
+   */
+  getDrafts(): Draft[] {
+    const currentDrafts = this.drafts();
+    if (!this.searchQuery) {
+      return currentDrafts;
+    }
+    const query = this.searchQuery.toLowerCase();
+    return currentDrafts.filter(
+      draft =>
+        draft.to.toLowerCase().includes(query) ||
+        draft.subject.toLowerCase().includes(query) ||
+        draft.body.toLowerCase().includes(query)
+    );
+  }
+
+  /**
+   * Get emails for a specific label
+   */
+  getEmailsByLabel(labelId: string): Email[] {
+    return this.emails().filter(e => e.labels?.includes(labelId));
+  }
+
+  /**
+   * Select a folder
+   */
+  selectFolder(folder: FolderType) {
+    this.currentFolder.set(folder);
+    this.closeEmail();
+  }
+
+  /**
+   * Get count of starred emails
+   */
+  getStarredCount(): number {
+    return this.emails().filter(e => e.isFlagged === true).length;
+  }
+
+  /**
+   * Convert draft to email for viewing
+   */
+  draftToEmail(draft: Draft): Email {
+    return {
+      id: parseInt(draft.id.replace('draft-', ''), 10),
+      from: draft.to,
+      subject: draft.subject,
+      preview: draft.body.substring(0, 100),
+      body: draft.body,
+      date: draft.date,
+      isRead: true,
+      avatar: draft.avatar,
+      isFlagged: false,
+      labels: draft.labels
+    };
+  }
+
+  /**
+   * Select an email to view
+   */
   selectEmail(email: Email) {
     email.isRead = true;
     this.selectedEmail.set(email);
+    this.emails.set([...this.emails()]);
   }
 
+  /**
+   * Close email detail view
+   */
   closeEmail() {
     this.selectedEmail.set(null);
   }
 
+  /**
+   * Navigate to compose
+   */
   composeEmail() {
     this.router.navigate(['/mail/compose']);
   }
 
+  /**
+   * Navigate to settings
+   */
+  openSettings() {
+    this.router.navigate(['/mail/settings']);
+  }
+
+  /**
+   * Logout
+   */
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
 
+  /**
+   * Delete an email
+   */
   deleteEmail(email: Email) {
-    const emails = this.emails();
-    const index = emails.indexOf(email);
-    if (index > -1) {
+    const folder = this.currentFolder();
+    if (folder === 'sent') {
+      const sent = this.sentEmails();
+      this.sentEmails.set(sent.filter(e => e.id !== email.id));
+      localStorage.setItem('email-sent', JSON.stringify(this.sentEmails()));
+    } else {
+      const emails = this.emails();
       this.emails.set(emails.filter(e => e.id !== email.id));
-      this.closeEmail();
+    }
+    this.closeEmail();
+  }
+
+  /**
+   * Delete a draft
+   */
+  deleteDraft(draft: Draft) {
+    this.emailService.deleteDraft(draft.id);
+    this.drafts.set(this.emailService.getDrafts()());
+  }
+
+  /**
+   * Toggle flag on email
+   */
+  flagEmail(email: Email) {
+    this.emailService.toggleFlag(email.id);
+    this.emails.set(this.emailService.getEmails()());
+  }
+
+  /**
+   * Add label to email
+   */
+  addLabelToEmail(email: Email, labelId: string) {
+    this.emailService.addLabelToEmail(email.id, labelId);
+    this.emails.set(this.emailService.getEmails()());
+  }
+
+  /**
+   * Remove label from email
+   */
+  removeLabelFromEmail(email: Email, labelId: string) {
+    this.emailService.removeLabelFromEmail(email.id, labelId);
+    this.emails.set(this.emailService.getEmails()());
+  }
+
+  /**
+   * Toggle new label dialog
+   */
+  toggleNewLabelDialog() {
+    this.showNewLabelDialog.set(!this.showNewLabelDialog());
+  }
+
+  /**
+   * Create a new label
+   */
+  createNewLabel() {
+    if (!this.newLabelName.trim()) {
+      alert('Label name is required');
+      return;
+    }
+
+    this.emailService.createLabel(this.newLabelName, this.newLabelColor, this.newLabelIcon);
+    this.labels.set(this.emailService.getLabels()());
+    this.newLabelName = '';
+    this.newLabelColor = '#667eea';
+    this.newLabelIcon = '🏷️';
+    this.toggleNewLabelDialog();
+  }
+
+  /**
+   * Delete a label
+   */
+  deleteLabel(labelId: string) {
+    if (confirm('Are you sure you want to delete this label? It will be removed from all emails.')) {
+      this.emailService.deleteLabel(labelId);
+      this.labels.set(this.emailService.getLabels()());
+      this.emails.set(this.emailService.getEmails()());
     }
   }
 
+  /**
+   * Get label by ID
+   */
+  getLabel(labelId: string): Label | undefined {
+    return this.labels().find(l => l.id === labelId);
+  }
+
+  /**
+   * Get initials from name
+   */
   getInitials(name: string): string {
     return name
       .split(' ')
       .map(n => n[0])
       .join('')
-      .toUpperCase();
+      .toUpperCase()
+      .substring(0, 2);
   }
 }
+

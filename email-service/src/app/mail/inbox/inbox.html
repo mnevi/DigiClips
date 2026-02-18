@@ -2,117 +2,290 @@
   <!-- Header -->
   <header class="inbox-header">
     <div class="header-left">
-      <h1>📧 Inbox</h1>
-      <span class="email-count">{{ getFilteredEmails().length }} emails</span>
+      <h1>{{ currentFolder() === 'inbox' ? '📧 Inbox' : currentFolder() === 'starred' ? '⭐ Starred' : currentFolder() === 'drafts' ? '✏️ Drafts' : '✉️ Sent' }}</h1>
+      <span class="email-count">
+        @switch(currentFolder()) {
+          @case('inbox') {
+            {{ getFilteredEmails().length }} emails
+          }
+          @case('starred') {
+            {{ getFilteredEmails().length }} starred
+          }
+          @case('drafts') {
+            {{ getDrafts().length }} drafts
+          }
+          @case('sent') {
+            {{ getFilteredEmails().length }} sent
+          }
+        }
+      </span>
     </div>
     <div class="header-right">
       <button class="compose-btn" (click)="composeEmail()">✎ Compose</button>
+      <button class="settings-btn" (click)="openSettings()" title="Settings">⚙️</button>
       <div class="user-menu">
-        <div class="user-name">{{ currentUser() }}</div>
+        <div class="user-avatar">{{ getInitials(currentUser()) }}</div>
         <button class="logout-btn" (click)="logout()" title="Logout">↓</button>
       </div>
     </div>
   </header>
 
   <div class="inbox-content">
-    <!-- Sidebar with folders -->
+    <!-- Sidebar with folders and labels -->
     <aside class="sidebar">
       <nav class="folders">
+        <!-- Folders Section -->
         <div class="folder-section">
-          <div class="folder-item active">
+          <div class="section-title">Mail Folders</div>
+          <div 
+            class="folder-item"
+            [class.active]="currentFolder() === 'inbox'"
+            (click)="selectFolder('inbox')"
+          >
             <span class="folder-icon">📥</span>
             <span class="folder-name">Inbox</span>
-            <span class="folder-count">{{ getFilteredEmails().length }}</span>
+            <span class="folder-count">{{ emails().length }}</span>
           </div>
-          <div class="folder-item">
+          <div 
+            class="folder-item"
+            [class.active]="currentFolder() === 'starred'"
+            (click)="selectFolder('starred')"
+          >
             <span class="folder-icon">⭐</span>
             <span class="folder-name">Starred</span>
-            <span class="folder-count">3</span>
+            <span class="folder-count">{{ getStarredCount() }}</span>
           </div>
-          <div class="folder-item">
+          <div 
+            class="folder-item"
+            [class.active]="currentFolder() === 'drafts'"
+            (click)="selectFolder('drafts')"
+          >
             <span class="folder-icon">✏️</span>
             <span class="folder-name">Drafts</span>
-            <span class="folder-count">1</span>
+            <span class="folder-count">{{ drafts().length }}</span>
           </div>
-          <div class="folder-item">
+          <div 
+            class="folder-item"
+            [class.active]="currentFolder() === 'sent'"
+            (click)="selectFolder('sent')"
+          >
             <span class="folder-icon">✓</span>
             <span class="folder-name">Sent</span>
-            <span class="folder-count">24</span>
-          </div>
-          <div class="folder-item">
-            <span class="folder-icon">🔗</span>
-            <span class="folder-name">All Mail</span>
-            <span class="folder-count">247</span>
+            <span class="folder-count">{{ sentEmails().length }}</span>
           </div>
         </div>
+
+        <!-- Labels Section -->
         <div class="folder-section">
-          <div class="section-title">Labels</div>
-          <div class="folder-item">
-            <span class="folder-icon">🏷️</span>
-            <span class="folder-name">Work</span>
-            <span class="folder-count">12</span>
+          <div class="section-header">
+            <span class="section-title">Labels</span>
+            <button 
+              class="add-label-btn" 
+              (click)="toggleNewLabelDialog()"
+              title="Create new label"
+            >
+              +
+            </button>
           </div>
-          <div class="folder-item">
-            <span class="folder-icon">🏷️</span>
-            <span class="folder-name">Personal</span>
-            <span class="folder-count">8</span>
-          </div>
+          @if (labels().length === 0) {
+            <p class="no-labels">No labels yet</p>
+          } @else {
+            @for (label of labels(); track label.id) {
+              <div class="label-item">
+                <span class="label-info">
+                  <span class="label-icon">{{ label.icon }}</span>
+                  <span class="label-name">{{ label.name }}</span>
+                </span>
+                <button 
+                  class="label-delete" 
+                  (click)="deleteLabel(label.id)"
+                  title="Delete label"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+          }
         </div>
       </nav>
     </aside>
 
+    <!-- New Label Dialog -->
+    @if (showNewLabelDialog()) {
+      <div class="modal-overlay" (click)="toggleNewLabelDialog()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <h2>Create New Label</h2>
+          
+          <div class="form-group">
+            <label>Label Name</label>
+            <input
+              type="text"
+              [(ngModel)]="newLabelName"
+              placeholder="e.g., Project A"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Color</label>
+            <input
+              type="color"
+              [(ngModel)]="newLabelColor"
+              class="form-color"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Icon</label>
+            <input
+              type="text"
+              [(ngModel)]="newLabelIcon"
+              placeholder="e.g., 🏷️"
+              class="form-input"
+              maxlength="2"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button 
+              class="btn-primary" 
+              (click)="createNewLabel()"
+            >
+              Create Label
+            </button>
+            <button 
+              class="btn-secondary" 
+              (click)="toggleNewLabelDialog()"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Main email list -->
     <main class="email-list-section">
       <!-- Search bar -->
-      <div class="search-bar">
-        <input
-          type="text"
-          [(ngModel)]="searchQuery"
-          placeholder="Search emails..."
-          class="search-input"
-        />
-        <span class="search-icon">🔍</span>
+      <div class="search-container">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search emails..."
+            class="search-input"
+          />
+        </div>
       </div>
 
       <!-- Email list -->
       <div class="email-list">
-        @if (getFilteredEmails().length === 0) {
-          <div class="empty-state">
-            <p>No emails found</p>
-            <button class="btn-primary" (click)="composeEmail()">Compose New Email</button>
-          </div>
-        } @else {
-          @for (email of getFilteredEmails(); track email.id) {
-            <div
-              class="email-item"
-              [class.unread]="!email.isRead"
-              (click)="selectEmail(email)"
-            >
-              <div class="email-avatar">{{ email.avatar }}</div>
-              <div class="email-content">
-                <div class="email-header">
-                  <span class="email-from">{{ email.from }}</span>
-                  <span class="email-date">{{ email.date }}</span>
-                </div>
-                <div class="email-subject">{{ email.subject }}</div>
-                <div class="email-preview">{{ email.preview }}</div>
-              </div>
-              @if (!email.isRead) {
-                <div class="unread-indicator"></div>
-              }
+        @if (currentFolder() === 'drafts') {
+          @if (getDrafts().length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon">📝</div>
+              <p>No drafts yet</p>
+              <button class="btn-primary" (click)="composeEmail()">Create New Draft</button>
             </div>
+          } @else {
+            @for (draft of getDrafts(); track draft.id) {
+              <div class="email-item draft-item" (click)="selectEmail(draftToEmail(draft))">
+                <div class="email-avatar">{{ draft.avatar }}</div>
+                <div class="email-content">
+                  <div class="email-header">
+                    <span class="email-from">To: {{ draft.to }}</span>
+                    <span class="email-date">{{ draft.date }}</span>
+                  </div>
+                  <div class="email-subject">{{ draft.subject }}</div>
+                  <div class="email-preview">{{ draft.body }}</div>
+                </div>
+                <button 
+                  class="draft-delete-btn"
+                  (click)="deleteDraft(draft); $event.stopPropagation()"
+                  title="Delete draft"
+                >
+                  🗑️
+                </button>
+              </div>
+            }
+          }
+        } @else {
+          @if (getFilteredEmails().length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon">📭</div>
+              <p>No emails found</p>
+              <button class="btn-primary" (click)="composeEmail()">Compose New Email</button>
+            </div>
+          } @else {
+            @for (email of getFilteredEmails(); track email.id) {
+              <div
+                class="email-item"
+                [class.unread]="!email.isRead"
+                (click)="selectEmail(email)"
+              >
+                <div class="email-avatar">{{ email.avatar }}</div>
+                <div class="email-content">
+                  <div class="email-header">
+                    <span class="email-from">{{ email.from }}</span>
+                    @if (email.labels && email.labels.length > 0) {
+                      <div class="email-labels">
+                        @for (labelId of email.labels; track labelId) {
+                          @let label = getLabel(labelId);
+                          @if (label) {
+                            <span class="label-badge" [style.backgroundColor]="label.color">
+                              {{ label.icon }}
+                            </span>
+                          }
+                        }
+                      </div>
+                    }
+                    <span class="email-date">{{ email.date }}</span>
+                  </div>
+                  <div class="email-subject">{{ email.subject }}</div>
+                  <div class="email-preview">{{ email.preview }}</div>
+                </div>
+                <div class="email-actions">
+                  <button 
+                    class="action-btn"
+                    [class.flagged]="email.isFlagged"
+                    (click)="flagEmail(email); $event.stopPropagation()"
+                    title="Flag"
+                  >
+                    {{ email.isFlagged ? '⭐' : '☆' }}
+                  </button>
+                  @if (!email.isRead) {
+                    <div class="unread-indicator"></div>
+                  }
+                </div>
+              </div>
+            }
           }
         }
       </div>
     </main>
 
-    <!-- Email detail view -->
+    <!-- Email detail panel -->
     @if (selectedEmail(); as email) {
       <div class="email-detail-panel">
         <div class="detail-header">
           <button class="close-btn" (click)="closeEmail()">✕</button>
           <div class="detail-actions">
-            <button class="icon-btn" title="Delete">🗑️</button>
+            <button 
+              class="icon-btn" 
+              [class.flagged]="email.isFlagged"
+              (click)="flagEmail(email)"
+              [title]="email.isFlagged ? 'Remove flag' : 'Flag email'"
+            >
+              {{ email.isFlagged ? '⭐' : '☆' }}
+            </button>
+            <button 
+              class="icon-btn" 
+              (click)="deleteEmail(email)"
+              title="Delete"
+            >
+              🗑️
+            </button>
             <button class="icon-btn" title="Archive">📦</button>
             <button class="icon-btn" title="Mark as spam">⚠️</button>
           </div>
@@ -130,18 +303,22 @@
 
           <div class="detail-subject">{{ email.subject }}</div>
 
-          <div class="detail-body">
-            <p>
-              {{ email.preview }}
-            </p>
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
-            </p>
-          </div>
+          @if (email.labels && email.labels.length > 0) {
+            <div class="detail-labels">
+              @for (labelId of email.labels; track labelId) {
+                @let label = getLabel(labelId);
+                @if (label) {
+                  <span class="label-badge-full" [style.backgroundColor]="label.color">
+                    {{ label.icon }} {{ label.name }}
+                  </span>
+                }
+              }
+            </div>
+          }
 
-          <div class="detail-footer">
-            <button class="btn-secondary">Reply</button>
+          <div class="detail-body">
+            <p>{{ email.preview }}</p>
+            <p>{{ email.body }}</p>
             <button class="btn-secondary">Reply All</button>
             <button class="btn-secondary">Forward</button>
           </div>

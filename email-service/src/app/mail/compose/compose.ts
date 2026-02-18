@@ -1,33 +1,23 @@
 /**
  * Compose Component
  *
- * TODO: connect to nodemailer
+ * Modern email composition with:
+ * - Draft auto-save functionality
+ * - Label assignment
+ * - File attachments
+ * - Email signature support
+ * - Real-time format preview
  */
 
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
+import { EmailService, Draft, Label } from '../../core/services/email';
 import { HttpClient } from '@angular/common/http';
-
-interface Email {
-  id: number;
-  from: string;
-  subject: string;
-  preview: string;
-  date: string;
-  isRead: boolean;
-  avatar: string;
-}
-
-interface ComposeModel {
-  to: string;
-  cc: string;
-  bcc: string;
-  subject: string;
-  body: string;
-}
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-compose',
@@ -36,51 +26,131 @@ interface ComposeModel {
   standalone: true,
   imports: [CommonModule, FormsModule]
 })
-export class ComposeComponent implements OnInit {
-  emails = signal<Email[]>([]);
-  searchQuery = '';
+export class ComposeComponent implements OnInit, OnDestroy {
   currentUser = signal<string>('');
-  selectedEmail = signal<Email | null>(null);
+  allLabels = signal<Label[]>([]);
+  selectedLabels = signal<string[]>([]);
+  showLabelDropdown = signal(false);
+  showCcBcc = signal(false);
+  isSending = signal(false);
+  saveStatus = signal<'saved' | 'saving' | 'unsaved'>('unsaved');
+  lastSaveTime = signal<string>('');
 
-  compose: ComposeModel = {
+  draft: Draft = {
+    id: 'draft-' + Date.now(),
     to: '',
     cc: '',
     bcc: '',
     subject: '',
     body: '',
+    avatar: 'U',
+    date: new Date().toLocaleString(),
+    labels: [],
+    attachments: []
   };
 
   selectedFiles: File[] = [];
+  private autoSaveInterval: any;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
     private authService: AuthService,
+    private emailService: EmailService,
     private http: HttpClient
   ) {
     this.currentUser.set(this.authService.getCurrentUser() || 'User');
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.allLabels.set(this.emailService.getLabels()());
+    this.setupAutoSave();
+  }
 
-  closeCompose(): void {
-    try {
-      window.history.length > 1 ? window.history.back() : this.router.navigateByUrl('/');
-    } catch (e) {
-      window.history.back();
+  ngOnDestroy(): void {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+    }
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Setup auto-save functionality
+   */
+  private setupAutoSave(): void {
+    const preferences = this.emailService.getPreferences();
+    if (preferences().autoSaveDraft) {
+      this.autoSaveInterval = setInterval(
+        () => this.autoSaveDraft(),
+        preferences().autoSaveInterval * 1000
+      );
     }
   }
 
-  /** Handle file input change */
+  /**
+   * Auto-save draft if content changed
+   */
+  private autoSaveDraft(): void {
+    if (this.draft.subject || this.draft.body || this.draft.to) {
+      this.saveDraft(true);
+    }
+  }
+
+  /**
+   * Toggle CC/BCC fields
+   */
+  toggleCcBcc(): void {
+    this.showCcBcc.set(!this.showCcBcc());
+  }
+
+  /**
+   * Toggle label dropdown
+   */
+  toggleLabelDropdown(): void {
+    this.showLabelDropdown.set(!this.showLabelDropdown());
+  }
+
+  /**
+   * Add/remove label
+   */
+  toggleLabel(labelId: string): void {
+    const current = this.selectedLabels();
+    if (current.includes(labelId)) {
+      this.selectedLabels.set(current.filter(l => l !== labelId));
+    } else {
+      this.selectedLabels.set([...current, labelId]);
+    }
+    this.draft.labels = this.selectedLabels();
+  }
+
+  /**
+   * Get label details
+   */
+  getLabel(labelId: string): Label | undefined {
+    return this.allLabels().find(l => l.id === labelId);
+  }
+
+  /**
+   * Handle file input change
+   */
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
     const incoming = Array.from(input.files);
     incoming.forEach(f => {
-      const exists = this.selectedFiles.some(sf => sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified);
-      if (!exists) this.selectedFiles.push(f);
+      const exists = this.selectedFiles.some(
+        sf => sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified
+      );
+      if (!exists) {
+        this.selectedFiles.push(f);
+      }
     });
   }
 
+  /**
+   * Remove attachment
+   */
   removeAttachment(index: number): void {
     if (index >= 0 && index < this.selectedFiles.length) {
       this.selectedFiles.splice(index, 1);
@@ -88,51 +158,84 @@ export class ComposeComponent implements OnInit {
   }
 
   /**
-   * Send email (stub)
+   * Format file size for display
    */
-  sendEmail(): void {
-    if (!this.compose.to || !this.compose.body) {
-      console.warn('Required fields missing: to/body');
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  /**
+   * Save draft
+   */
+  saveDraft(isAuto: boolean = false): void {
+    if (!this.draft.subject && !this.draft.body && !this.draft.to) {
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.compose.to)) {
-        console.warn('Invalid email format for "To" field');
-        return;
-    }
+    this.saveStatus.set('saving');
+    setTimeout(() => {
+      this.draft.date = new Date().toLocaleString();
+      this.draft.labels = this.selectedLabels();
+      this.emailService.saveDraft(this.draft);
+      this.saveStatus.set('saved');
+      this.lastSaveTime.set(new Date().toLocaleTimeString());
 
-    const payload = {
-      to: this.compose.to,
-      cc: this.compose.cc,
-      bcc: this.compose.bcc,
-      subject: this.compose.subject,
-      body: this.compose.body,
-      attachments: this.selectedFiles.map(f => ({ name: f.name, size: f.size }))
-    };
-
-    this.http.post<any>('/api/send-email', payload).subscribe({
-        next: res => {
-        console.log('Email sent:', res);
-        if (res?.previewUrl) {
-            window.open(res.previewUrl, '_blank'); // Ethereal preview
-        }
-        this.closeCompose();
-        },
-        error: err => {
-            console.error('Failed to send email', err);
-            alert('Failed to send email');
-        }
-  });
-
-    // After send, navigate back (or clear form). Here we go back to previous page.
-    this.closeCompose();
+      if (!isAuto) {
+        setTimeout(() => this.saveStatus.set('unsaved'), 3000);
+      }
+    }, 300);
   }
 
-  saveDraft(): void {
-    const draft = {
-      ...this.compose,
-      attachments: this.selectedFiles.map(f => ({ name: f.name, size: f.size }))
-    };
-    console.log('Saving draft (stub):', draft);
+  /**
+   * Send email
+   */
+  sendEmail(): void {
+    if (!this.draft.to || !this.draft.body) {
+      alert('Please fill in "To" and message body');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.draft.to.split(',')[0].trim())) {
+      alert('Invalid email format for "To" field');
+      return;
+    }
+
+    this.isSending.set(true);
+
+    this.emailService
+      .sendEmail(this.draft)
+      .then(res => {
+        console.log('Email sent:', res);
+        alert('Email sent successfully!');
+        this.isSending.set(false);
+        this.closeCompose();
+      })
+      .catch(err => {
+        console.error('Failed to send email', err);
+        alert('Failed to send email. Please try again.');
+        this.isSending.set(false);
+      });
+  }
+
+  /**
+   * Close compose window
+   */
+  closeCompose(): void {
+    try {
+      window.history.length > 1 ? window.history.back() : this.router.navigateByUrl('/mail/inbox');
+    } catch (e) {
+      this.router.navigateByUrl('/mail/inbox');
+    }
+  }
+
+  private getCurrentDate(): string {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `Today ${hours}:${minutes}`;
   }
 }

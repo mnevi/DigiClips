@@ -2,97 +2,216 @@
   <!-- Header -->
   <header class="compose-header">
     <div class="header-left">
-      <h1>✉️ Compose</h1>
-      <span class="compose-subtitle">New email</span>
+      <h1>✎ New Message</h1>
+      <div class="save-status" [ngClass]="saveStatus()">
+        @switch(saveStatus()) {
+          @case('saved') {
+            <span class="status-text">✓ Saved</span>
+          }
+          @case('saving') {
+            <span class="status-text">⏳ Saving...</span>
+          }
+          @case('unsaved') {
+            <span class="status-text">⚠ Unsaved</span>
+          }
+        }
+        @if (lastSaveTime()) {
+          <span class="last-save-time">{{ lastSaveTime() }}</span>
+        }
+      </div>
     </div>
 
     <div class="header-right">
-      <button class="close-btn" (click)="closeCompose()">✕</button>
+      <button class="close-btn" (click)="closeCompose()" title="Close">✕</button>
     </div>
   </header>
 
   <!-- Body -->
-  <form class="compose-content" (ngSubmit)="sendEmail()" #form="ngForm">
+  <form class="compose-form" (ngSubmit)="sendEmail()">
     <div class="compose-fields">
+      <!-- To Field -->
       <div class="field">
         <label>To</label>
         <input
           type="email"
           required
           name="to"
-          [(ngModel)]="compose.to"
+          [(ngModel)]="draft.to"
           placeholder="recipient@example.com"
+          (ngModelChange)="draft.to = $event"
+          class="field-input"
         />
       </div>
 
-      <div class="field-row">
-        <div class="field">
-          <label>CC</label>
-          <input
-            type="text"
-            name="cc"
-            [(ngModel)]="compose.cc"
-            placeholder="cc@example.com"
-          />
-        </div>
+      <!-- CC/BCC Toggle -->
+      <button
+        type="button"
+        class="toggle-ccbcc-btn"
+        (click)="toggleCcBcc()"
+      >
+        {{ showCcBcc() ? '✓' : '+' }} {{ showCcBcc() ? 'Hide' : 'Add' }} CC / BCC
+      </button>
 
-        <div class="field">
-          <label>BCC</label>
-          <input
-            type="text"
-            name="bcc"
-            [(ngModel)]="compose.bcc"
-            placeholder="bcc@example.com"
-          />
-        </div>
-      </div>
+      <!-- CC/BCC Fields -->
+      @if (showCcBcc()) {
+        <div class="field-row">
+          <div class="field">
+            <label>CC</label>
+            <input
+              type="text"
+              name="cc"
+              [(ngModel)]="draft.cc"
+              placeholder="cc@example.com"
+              class="field-input"
+            />
+          </div>
 
+          <div class="field">
+            <label>BCC</label>
+            <input
+              type="text"
+              name="bcc"
+              [(ngModel)]="draft.bcc"
+              placeholder="bcc@example.com"
+              class="field-input"
+            />
+          </div>
+        </div>
+      }
+
+      <!-- Subject Field -->
       <div class="field">
         <label>Subject</label>
         <input
           type="text"
           name="subject"
-          [(ngModel)]="compose.subject"
-          placeholder="Subject"
+          [(ngModel)]="draft.subject"
+          placeholder="Subject line"
+          class="field-input"
         />
       </div>
 
+      <!-- Labels Section -->
+      <div class="labels-section">
+        <div class="labels-header">
+          <button
+            type="button"
+            class="label-toggle-btn"
+            (click)="toggleLabelDropdown()"
+          >
+            🏷️ Labels
+            @if (selectedLabels().length > 0) {
+              <span class="label-count">({{ selectedLabels().length }})</span>
+            }
+          </button>
+        </div>
+
+        @if (showLabelDropdown()) {
+          <div class="labels-dropdown">
+            @for (label of allLabels(); track label.id) {
+              <label class="label-option">
+                <input
+                  type="checkbox"
+                  [checked]="selectedLabels().includes(label.id)"
+                  (change)="toggleLabel(label.id)"
+                />
+                <span class="label-icon">{{ label.icon }}</span>
+                <span class="label-name">{{ label.name }}</span>
+              </label>
+            }
+          </div>
+        }
+
+        @if (selectedLabels().length > 0) {
+          <div class="selected-labels">
+            @for (labelId of selectedLabels(); track labelId) {
+              @let label = getLabel(labelId);
+              @if (label) {
+                <span class="label-badge" [style.backgroundColor]="label.color">
+                  {{ label.icon }} {{ label.name }}
+                </span>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Message Body -->
       <div class="field">
         <label>Message</label>
         <textarea
-          rows="10"
+          rows="12"
           name="body"
-          [(ngModel)]="compose.body"
+          [(ngModel)]="draft.body"
           placeholder="Write your message..."
+          class="field-textarea"
         ></textarea>
+      </div>
+
+      <!-- Attachments Section -->
+      <div class="attachments-section">
+        <label class="attachment-label">
+          <input
+            type="file"
+            multiple
+            (change)="onFilesSelected($event)"
+            class="file-input"
+            hidden
+          />
+          <span class="attachment-button">📎 Attach Files</span>
+        </label>
+
+        @if (selectedFiles.length > 0) {
+          <div class="attachments-list">
+            <h4>Attachments:</h4>
+            @for (file of selectedFiles; track file.name + file.size; let i = $index) {
+              <div class="attachment-item">
+                <span class="attachment-icon">📄</span>
+                <div class="attachment-info">
+                  <div class="attachment-name">{{ file.name }}</div>
+                  <div class="attachment-size">{{ formatFileSize(file.size) }}</div>
+                </div>
+                <button
+                  type="button"
+                  class="remove-attachment-btn"
+                  (click)="removeAttachment(i)"
+                  title="Remove"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+        }
       </div>
     </div>
 
     <!-- Footer -->
     <div class="compose-footer">
-      <button
-        type="submit"
-        class="btn-primary"
-        [disabled]="form.invalid"
-      >
-        Send
-      </button>
+      <div class="footer-left">
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isSending() || !draft.to || !draft.body"
+        >
+          {{ isSending() ? '⏳ Sending...' : '📤 Send' }}
+        </button>
+      </div>
 
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="saveDraft()"
-      >
-        Save Draft
-      </button>
+      <div class="footer-right">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="saveDraft()"
+        >
+          💾 Save Draft
+        </button>
 
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="closeCompose()"
-      >
-        Cancel
-      </button>
-    </div>
-  </form>
-</div>
+        <button
+          type="button"
+          class="btn-tertiary"
+          (click)="closeCompose()"
+        >
+          Cancel
+        </button>
+      </div>
