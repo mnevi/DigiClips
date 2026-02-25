@@ -1,19 +1,25 @@
 <div class="alert-container">
   <div class="alert-card">
     <div class="alert-header">
-      <h1>Schedule Alerts</h1>
+      <h1>Create Email Alerts</h1>
+      <p>An email will be sent to you whenever additional search results are found</p>
     </div>
 
       <div class="form-group">
-        <label for="alert">Alert Message</label>
+        <label for="alert">Search Term</label>
         <input 
           id="alert"
           placeholder="Enter your alert message"
         />
-        <label for="calendar">Alert Date</label>
-        <input type="date" id="calendar"/>
+        <label for="frequency">Search Frequency</label>
+        <select id="frequency">
+          <option value="1m">1 minute</option>
+          <option value="5m">5 minutes</option>
+          <option value="1h">1 hour</option>
+          <option value="1d">Daily</option>
+        </select>
       </div>
 
-      <button type="submit" class="add-alert-button">Add Alert</button>
+      <button type="submit" class="add-alert-button">Create Alert</button>
   </div>
 </div>

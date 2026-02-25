@@ -21,6 +21,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login';
 import { AlertComponent } from './auth/alert/alert';
 import { AuthGuard } from './core/guards/auth-guard';
+import { SearchComponent } from './search/search';
 
 export const routes: Routes = [
   // Public route: User login page
@@ -34,6 +35,8 @@ export const routes: Routes = [
   },
 
   { path: 'alert', component: AlertComponent},
+
+  { path: 'search', component: SearchComponent},
   
   // Default route: Redirect root to /mail (authenticated users)
   { path: '', redirectTo: 'mail', pathMatch: 'full' }
