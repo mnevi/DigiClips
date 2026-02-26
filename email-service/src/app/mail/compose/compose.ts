@@ -7,6 +7,7 @@
  * - File attachments
  * - Email signature support
  * - Real-time format preview
+ * - AI-powered web scraping for current events
  */
 
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
@@ -15,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { EmailService, Draft, Label } from '../../core/services/email';
+import { AIService } from '../../core/services/ai';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -33,8 +35,10 @@ export class ComposeComponent implements OnInit, OnDestroy {
   showLabelDropdown = signal(false);
   showCcBcc = signal(false);
   isSending = signal(false);
+  isScraping = signal(false);
   saveStatus = signal<'saved' | 'saving' | 'unsaved'>('unsaved');
   lastSaveTime = signal<string>('');
+  scrapingError = signal<string>('');
 
   draft: Draft = {
     id: 'draft-' + Date.now(),
@@ -49,6 +53,7 @@ export class ComposeComponent implements OnInit, OnDestroy {
     attachments: []
   };
 
+  aiPrompt = signal<string>('');  // User's custom input for AI
   selectedFiles: File[] = [];
   private autoSaveInterval: any;
   private destroy$ = new Subject<void>();
@@ -57,6 +62,7 @@ export class ComposeComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private emailService: EmailService,
+    private aiService: AIService,
     private http: HttpClient
   ) {
     this.currentUser.set(this.authService.getCurrentUser() || 'User');
@@ -230,6 +236,62 @@ export class ComposeComponent implements OnInit, OnDestroy {
     } catch (e) {
       this.router.navigateByUrl('/mail/inbox');
     }
+  }
+
+  /**
+   * Generate content using user's custom prompt
+   */
+  scrapeCurrentEvent(): void {
+    const prompt = this.aiPrompt().trim();
+    
+    if (!prompt) {
+      this.scrapingError.set('Please enter a prompt or topic');
+      return;
+    }
+
+    this.isScraping.set(true);
+    this.scrapingError.set('');
+
+    // Use custom prompt if provided, otherwise generate a default event
+    this.aiService.fetchCurrentEvent(prompt).subscribe({
+      next: (response) => {
+        if (response.success && response.response) {
+          // Insert generated content into email body
+          if (this.draft.body) {
+            this.draft.body += '\n\n' + response.response;
+          } else {
+            this.draft.body = response.response;
+          }
+
+          // Set subject from prompt if not already set
+          if (!this.draft.subject && prompt) {
+            this.draft.subject = this.capitalizeWords(prompt.substring(0, 50));
+          }
+
+          // Clear the prompt input
+          this.aiPrompt.set('');
+          this.isScraping.set(false);
+        } else {
+          this.scrapingError.set(response.error || 'Failed to generate content');
+          this.isScraping.set(false);
+        }
+      },
+      error: (err) => {
+        console.error('AI generation error:', err);
+        this.scrapingError.set('Unable to connect to AI backend. Make sure backend server is running on http://localhost:3000');
+        this.isScraping.set(false);
+      }
+    });
+  }
+
+  /**
+   * Capitalize first letter of each word
+   */
+  private capitalizeWords(text: string): string {
+    return text
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   private getCurrentDate(): string {

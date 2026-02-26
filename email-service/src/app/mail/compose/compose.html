@@ -139,11 +139,44 @@
       <!-- Message Body -->
       <div class="field">
         <label>Message</label>
-        <textarea
-          rows="12"
+        
+        <!-- AI Prompt Section -->
+        <div class="ai-section">
+          <label class="ai-label">🤖 AI Content Generator</label>
+          <p class="ai-hint">Enter a topic or prompt. AI will generate relevant content for your email.</p>
+          
+          <div class="ai-input-group">
+            <input
+              type="text"
+              name="aiPrompt"
+              [(ngModel)]="aiPrompt"
+              placeholder="e.g., 'Write a professional project update', 'Create a meeting agenda for...', 'Draft a follow-up message about...'"
+              class="ai-prompt-input"
+              (keyup.enter)="scrapeCurrentEvent()"
+            />
+            <button
+              type="button"
+              class="btn-scrape-event"
+              (click)="scrapeCurrentEvent()"
+              [disabled]="isScraping() || !aiPrompt().trim()"
+              title="Generate content using AI (Ollama)"
+            >
+              {{ isScraping() ? '🔄 Generating...' : '✨ Generate' }}
+            </button>
+          </div>
+          
+          @if (scrapingError()) {
+            <div class="scraping-error">
+              ⚠️ {{ scrapingError() }}
+            </div>
+          }
+        </div>
+
+        <textarea 
+          rows="50"
           name="body"
           [(ngModel)]="draft.body"
-          placeholder="Write your message..."
+          placeholder="Write your message... (AI-generated content will be added here)"
           class="field-textarea"
         ></textarea>
       </div>
