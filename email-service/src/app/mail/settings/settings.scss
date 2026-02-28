@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f8f9fa;
+  background: var(--inbox-bg);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
 
@@ -12,8 +12,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  background: white;
-  border-bottom: 1px solid #e9ecef;
+  background: var(--inbox-header-bg);
+  border-bottom: var(--inbox-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
@@ -41,7 +41,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .success-message {
@@ -74,8 +74,8 @@
 /* Tabs */
 .settings-tabs {
   width: 200px;
-  background: white;
-  border-right: 1px solid #e9ecef;
+  background: var(--inbox-bg);
+  border-right: var(--inbox-border);
   padding: 1rem 0;
   overflow-y: auto;
 }
@@ -88,7 +88,7 @@
   background: transparent;
   border: none;
   border-left: 3px solid transparent;
-  color: #495057;
+  color: var(--inbox-text);
   cursor: pointer;
   font-size: 0.95rem;
   transition: all 0.2s ease;
@@ -117,7 +117,7 @@
 
 /* Settings Section */
 .settings-section {
-  background: white;
+  background: var(--inbox-bg);
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -128,7 +128,7 @@
   margin-top: 0;
   margin-bottom: 1.5rem;
   font-size: 1.2rem;
-  color: #1a1a1a;
+  color: var(--inbox-text);
   font-weight: 600;
 }
 
@@ -154,7 +154,7 @@
 
 .setting-label span {
   font-weight: 500;
-  color: #495057;
+  color: var(--inbox-text);
   font-size: 0.95rem;
 }
 
@@ -173,7 +173,7 @@
 }
 
 .setting-checkbox span {
-  color: #495057;
+  color: var(--inbox-text);
   font-size: 0.95rem;
 }
 

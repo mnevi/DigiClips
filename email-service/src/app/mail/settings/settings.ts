@@ -22,7 +22,7 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule],
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   preferences = signal<UserPreferences | null>(null);
@@ -32,7 +32,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   constructor(
     private emailService: EmailService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -80,5 +80,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     if (current) {
       current.notificationsEnabled = (event.target as HTMLInputElement).checked;
     }
+  }
+
+  toggleTheme(value: 'light' | 'dark'): void {
+    const root = document.documentElement;
+    if (value === 'dark') root.classList.add('theme-dark');
+    else root.classList.remove('theme-dark');
   }
 }

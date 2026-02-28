@@ -105,7 +105,11 @@
           <div class="setting-item">
             <label class="setting-label">
               <span>Theme</span>
-              <select [(ngModel)]="prefs.theme" class="input-select">
+              <select
+                [(ngModel)]="prefs.theme"
+                (ngModelChange)="toggleTheme($event)"
+                class="input-select"
+              >
                 <option value="light">Light mode</option>
                 <option value="dark">Dark mode</option>
               </select>
@@ -191,7 +195,9 @@
                 class="input-textarea"
               ></textarea>
             </label>
-            <small class="help-text">This signature will be automatically added to emails you send.</small>
+            <small class="help-text"
+              >This signature will be automatically added to emails you send.</small
+            >
           </div>
 
           <div class="signature-preview">
@@ -205,12 +211,8 @@
 
       <!-- Action Buttons -->
       <div class="settings-actions">
-        <button class="btn-primary" (click)="savePreferences()">
-          💾 Save Changes
-        </button>
-        <button class="btn-secondary" (click)="resetPreferences()">
-          Reset
-        </button>
+        <button class="btn-primary" (click)="savePreferences()">💾 Save Changes</button>
+        <button class="btn-secondary" (click)="resetPreferences()">Reset</button>
       </div>
     </div>
   </div>
