@@ -1,5 +1,10 @@
-/* Global Styles */
+/**
+ * GLOBAL STYLES - Modern, Clean Design
+ * Consistent typography, spacing, and responsive behavior
+ */
 
+/* ===== RESET & DEFAULTS ===== */
+/* Ensure consistent box-sizing across all elements */
 * {
   margin: 0;
   padding: 0;
@@ -14,16 +19,19 @@ body {
   padding: 0;
 }
 
+/* ===== TYPOGRAPHY ===== */
+/* Modern font stack with excellent readability */
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--bg);
   color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Scrollbar styling */
+/* ===== SCROLLBAR STYLING ===== */
+/* Custom scrollbar for modern appearance */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -36,108 +44,152 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--text-muted);
 }
 
-/* Button reset */
+/* ===== BUTTON RESET ===== */
+/* Consistent button styling across all elements */
 button {
   font-family: inherit;
   cursor: pointer;
+  border: none;
+  background: none;
 }
 
+/* ===== FORM ELEMENTS ===== */
+/* Consistent font family for form inputs */
 input,
 textarea,
 select {
   font-family: inherit;
 }
 
-/* Link styling */
+/* ===== LINKS ===== */
+/* Clean link styling - no underline by default */
 a {
   text-decoration: none;
   color: inherit;
 }
 
-/* CSS Variables for theming */
+
+
+/**
+ * CSS VARIABLES FOR MODERN THEMING
+ * Core colors: #667eea (primary blue), #764ba2 (accent purple)
+ * Maintains consistency across light and dark modes
+ */
 :root {
-  --bg: #f5f5f5;
+  /* ===== COLOR PALETTE ===== */
+  /* Background colors */
+  --bg: #f8f9fa;
   --surface: #ffffff;
   --panel: #ffffff;
+  
+  /* Text colors */
   --text: #1a1a1a;
-  --muted: #f2f2f2;
-  --border: #e9ecef;
-  --primary: #667eea;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  
+  /* UI neutral colors */
+  --muted: #f0f1f3;
+  --border: #e0e2e9;
+  --divider: #e9ecef;
+  
+  /* ===== PRIMARY & ACCENT COLORS ===== */
+  /* Keep core branding colors consistent */
+  --primary: #667eea;      /* Main blue-purple */
+  --accent-1: #764ba2;     /* Deep purple accent */
+  --accent-2: #667eea;     /* Secondary blue */
+  
+  /* ===== SCROLLBAR STYLING ===== */
   --scroll-track: #f1f1f1;
-  --scrollbar-thumb: #ccc;
-  /* Accent / gradient colors used by some components */
-  --accent-1: #764ba2;
-  --accent-2: #667eea;
-
-  /* Login specific */
+  --scrollbar-thumb: #d0d3dd;
+  
+  /* ===== LOGIN SCREEN ===== */
   --login-bg: linear-gradient(135deg, #1434d3 0%, #e46510 100%);
-  --login-bg-image: linear-gradient(135deg, #1434d3 0%, #e46510 100%);
   --login-card-bg: #ffffff;
-  --login-background-size: none;
-  --login-background-repeat: none;
-  --login-background-position: none;
-  --login-card-shadow: rgba(102, 126, 234, 0.12);
+  --login-card-shadow: rgba(102, 126, 234, 0.15);
   --login-header-color: #1a1a1a;
-  --login-subtitle-color: #666;
-  --form-input-bg: #f9f9f9;
-  --form-input-border: #e0e0e0;
-
-  /* Inbox specific */
-  --inbox-header-bg: linear-gradient(135deg, var(--accent-2) 0%, var(--accent-1) 100%);
-  --inbox-bg: white;
-  --inbox-container: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) --inbox-bg: var(--surface);
-  --inbox-border: 1px solid rgba(255, 255, 255, 0.1);
-  --inbox-text: var(--text);
-  --inbox-text-hover: #000000;
-  --sidebar-bg: linear-gradient(240deg, #ffffff 70.59%, var(--accent-1));
-  --panel-bg: var(--panel);
+  --login-subtitle-color: #666666;
+  --form-input-bg: #f9fafb;
+  --form-input-border: #e0e2e9;
+  --form-input-focus: rgba(102, 126, 234, 0.1);
+  
+  /* ===== INBOX/MAIL HEADER ===== */
+  /* Gradient from primary to accent creates polished look */
+  --inbox-header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --inbox-header-shadow: rgba(102, 126, 234, 0.2);
+  
+  /* ===== INBOX CONTAINER ===== */
+  --inbox-bg: #ffffff;
+  --inbox-container: #f8f9fa;
+  --inbox-border: 1px solid #e0e2e9;
+  --inbox-text: #1a1a1a;
+  
+  /* ===== SIDEBAR ===== */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f8f9fa;
+  --panel-bg: #ffffff;
 }
 
-/* Dark theme overrides */
+/**
+ * DARK MODE - Complete color scheme override
+ * Maintains structure and usability while adapting to dark background
+ * Accent colors remain consistent for brand continuity
+ */
 .theme-dark {
+  /* ===== DARK BACKGROUNDS ===== */
   --bg: #1a1a1a;
   --surface: #2a2a2a;
   --panel: #2a2a2a;
-  --text: #ffffff;
-  --muted: #eeeeee;
-  --border: #444444;
-  --primary: #5c7cfa;
+  --muted: #363636;
+  
+  /* ===== DARK TEXT COLORS ===== */
+  --text: #f0f0f0;
+  --text-secondary: #c0c0c0;
+  --text-muted: #888888;
+  
+  /* ===== DARK BORDERS & DIVIDERS ===== */
+  --border: #3a3a3a;
+  --divider: #2d2d2d;
+  
+  /* ===== PRIMARY COLORS (KEEP CONSISTENT) ===== */
+  /* Use lighter variants for better contrast in dark mode */
+  --primary: #7c8fff;      /* Lighter primary for visibility */
+  --accent-1: #9d7fb2;     /* Lighter purple accent */
+  --accent-2: #8a96f8;     /* Lighter secondary blue */
+  
+  /* ===== DARK SCROLLBAR ===== */
   --scroll-track: #2a2a2a;
   --scrollbar-thumb: #444444;
-
-  /* Dark-mode accents / gradients from your designs */
-  --accent-1: #764ba2;
-  --accent-2: #2e2d2d;
-
-  /* Login dark */
-  --login-bg: #2d2d2d;
-  --login-bg-image:
-    linear-gradient(to bottom, #764ba2, transparent),
-    linear-gradient(to right, #764ba2, transparent), linear-gradient(to top, #764ba2, transparent),
-    linear-gradient(to left, #764ba2, transparent);
-  --login-background-size: 100% 15px, 15px 99%, 100% 15px, 15px 100%;
-  --login-background-repeat: no-repeat;
-  --login-background-position: top, right, bottom, left;
-  --login-card-bg: #2e2d2d;
-  --login-card-shadow: #764ba2;
+  
+  /* ===== DARK LOGIN SCREEN ===== */
+  --login-bg: linear-gradient(135deg, #0d1929 0%, #1a1a1a 100%);
+  --login-card-bg: #2a2a2a;
+  --login-card-shadow: rgba(102, 126, 234, 0.25);
   --login-header-color: #e0e0e0;
   --login-subtitle-color: #b0b0b0;
-  --form-input-bg: #888888;
+  --form-input-bg: #363636;
   --form-input-border: #444444;
-
-  /* Inbox dark */
-  --inbox-header-bg: linear-gradient(135deg, var(--accent-2) 40%, var(--accent-1) 60%);
-  --inbox-container: linear-gradient(135deg, #2e2e2e 0%, #3a3a3a 100%);
-  --inbox-bg: #2e2e2e;
-  --inbox-border: 1px solid rgba(255, 255, 255, 0.1);
-  --inbox-text: #f0f0f0;
-  --inbox-text-hover: #000000;
-  --sidebar-bg: linear-gradient(240deg, #2d2d2d 70.59%, #764ba2);
-  --panel-bg: #2e2d2d;
+  --form-input-focus: rgba(124, 143, 255, 0.2);
+  
+  /* ===== DARK INBOX/MAIL HEADER ===== */
+  /* Darker gradient maintaining brand colors */
+  --inbox-header-bg: linear-gradient(135deg, #3a3a4a 0%, #5a4a7a 100%);
+  --inbox-header-shadow: rgba(0, 0, 0, 0.4);
+  
+  /* ===== DARK INBOX CONTAINER ===== */
+  --inbox-bg: #2a2a2a;
+  --inbox-container: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+  --inbox-border: 1px solid #3a3a3a;
+  --inbox-text: #e0e0e0;
+  
+  /* ===== DARK SIDEBAR ===== */
+  --sidebar-bg: #2a2a2a;
+  --sidebar-hover: #363636;
+  --panel-bg: #2a2a2a;
 }

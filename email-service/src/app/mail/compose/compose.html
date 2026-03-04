@@ -99,7 +99,7 @@
             class="label-toggle-btn"
             (click)="toggleLabelDropdown()"
           >
-            🏷️ Labels
+            Labels
             @if (selectedLabels().length > 0) {
               <span class="label-count">({{ selectedLabels().length }})</span>
             }
@@ -142,7 +142,7 @@
         
         <!-- AI Prompt Section -->
         <div class="ai-section">
-          <label class="ai-label">🤖 AI Content Generator</label>
+          <label class="ai-label">AI Content Generator</label>
           <p class="ai-hint">Enter a topic or prompt. AI will generate relevant content for your email.</p>
           
           <div class="ai-input-group">
@@ -161,7 +161,7 @@
               [disabled]="isScraping() || !aiPrompt().trim()"
               title="Generate content using AI (Ollama)"
             >
-              {{ isScraping() ? '🔄 Generating...' : '✨ Generate' }}
+              {{ isScraping() ? 'Generating...' : 'Generate' }}
             </button>
           </div>
           

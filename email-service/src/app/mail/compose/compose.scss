@@ -1,3 +1,8 @@
+/**
+ * COMPOSE VIEW - Modern Email Composition Interface
+ * Uses CSS variables for consistent theming and dark mode support
+ */
+
 .compose-container {
   display: flex;
   flex-direction: column;
@@ -7,15 +12,16 @@
   overflow: hidden;
 }
 
-/* Header */
+/* ===== HEADER ===== */
+/* Gradient header with primary accent colors for polished appearance */
 .compose-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.75rem;
   background: var(--inbox-header-bg);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px var(--inbox-header-shadow);
+  border-bottom: var(--inbox-border);
 }
 
 .header-left {
@@ -24,13 +30,16 @@
   gap: 1.25rem;
 }
 
+/* Header title - white on dark header background */
 .compose-header h1 {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 600;
   color: white;
+  letter-spacing: -0.5px;
 }
 
+/* Save status indicator - shows current save state with color feedback */
 .save-status {
   display: flex;
   align-items: center;
@@ -43,11 +52,13 @@
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 
+  /* Green indicator for saved state */
   &.saved {
     background: rgba(76, 175, 80, 0.2);
     color: #c8e6c9;
   }
 
+  /* Yellow indicator for saving in progress */
   &.saving {
     background: rgba(255, 193, 7, 0.2);
     color: #fff9c4;
@@ -69,6 +80,7 @@
   gap: 0.75rem;
 }
 
+/* Close button - semi-transparent white on colored background */
 .close-btn {
   padding: 0.5rem 0.75rem;
   background: rgba(255, 255, 255, 0.15);
@@ -84,7 +96,8 @@
   }
 }
 
-/* Form Container */
+/* ===== FORM CONTAINER ===== */
+/* Main composition form with rounded elevation styling */
 .compose-form {
   flex: 1;
   display: flex;
@@ -96,7 +109,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* Fields */
+/* ===== INPUT FIELDS ===== */
 .compose-fields {
   flex: 1;
   overflow-y: auto;
@@ -112,12 +125,14 @@
   gap: 0.4rem;
 }
 
+/* Two-column layout for recipient fields */
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
+/* Field labels - uppercase for visual hierarchy */
 .field label {
   font-size: 0.85rem;
   color: var(--inbox-text);
@@ -127,23 +142,26 @@
   opacity: 0.8;
 }
 
+/* Input styling - uses muted background with primary border on focus */
 .field-input,
 .field-textarea {
   padding: 0.85rem 1rem;
   font-size: 0.95rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   transition: all 0.3s ease;
   font-family: inherit;
   background: var(--muted);
+  color: var(--text);
 }
 
+/* Focus state - highlight with primary color and subtle shadow */
 .field-input:focus,
 .field-textarea:focus {
   outline: none;
-  border-color: #667eea;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--form-input-focus);
 }
 
 .field-textarea {
@@ -152,13 +170,14 @@
   font-size: 1rem;
 }
 
-/* CC/BCC Toggle */
+/* ===== CC/BCC TOGGLE ===== */
+/* Dashed border button for optional fields */
 .toggle-ccbcc-btn {
   align-self: flex-start;
   padding: 0.5rem 0.85rem;
   background: transparent;
-  color: #667eea;
-  border: 1px dashed #667eea;
+  color: var(--primary);
+  border: 1px dashed var(--primary);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -167,17 +186,18 @@
 
   &:hover {
     background: rgba(102, 126, 234, 0.05);
-    border-color: #764ba2;
-    color: #764ba2;
+    border-color: var(--accent-1);
+    color: var(--accent-1);
   }
 }
 
-/* Labels Section */
+/* ===== LABELS SECTION ===== */
+/* Organized section for email tagging/categorization */
 .labels-section {
   padding: 1rem;
   background: var(--muted);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border);
 }
 
 .labels-header {
@@ -187,11 +207,12 @@
   margin-bottom: 0.75rem;
 }
 
+/* Toggle button to show/hide labels */
 .label-toggle-btn {
   padding: 0.5rem 0.85rem;
   background: transparent;
-  color: #495057;
-  border: 1px solid #dee2e6;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -199,9 +220,9 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background: white;
-    border-color: #667eea;
-    color: #667eea;
+    background: var(--surface);
+    border-color: var(--primary);
+    color: var(--primary);
   }
 
   .label-count {
@@ -210,13 +231,14 @@
   }
 }
 
+/* Grid layout for label options */
 .labels-dropdown {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.5rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border);
 }
 
 .label-option {
@@ -227,13 +249,14 @@
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.2s ease;
+  color: var(--text);
 
   input[type='checkbox'] {
     cursor: pointer;
   }
 
   &:hover {
-    background: white;
+    background: var(--surface);
   }
 
   .label-icon {
@@ -242,16 +265,17 @@
 
   .label-name {
     font-size: 0.85rem;
-    color: #495057;
   }
 }
 
+/* Selected labels display area */
 .selected-labels {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
+/* Color-coded label badges */
 .label-badge {
   display: inline-flex;
   align-items: center;
@@ -264,24 +288,26 @@
   backdrop-filter: brightness(0.95);
 }
 
-/* Attachments Section */
+/* ===== ATTACHMENTS SECTION ===== */
+/* File upload and management area */
 .attachments-section {
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--muted);
   border-radius: 8px;
-  border: 1px dashed #dee2e6;
+  border: 1px dashed var(--border);
 }
 
 .attachment-label {
   cursor: pointer;
 }
 
+/* Dashed button for file upload */
 .attachment-button {
   display: inline-block;
   padding: 0.6rem 1rem;
-  background: white;
-  color: #667eea;
-  border: 2px dashed #667eea;
+  background: var(--surface);
+  color: var(--primary);
+  border: 2px dashed var(--primary);
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -303,25 +329,26 @@
   h4 {
     margin: 0.5rem 0;
     font-size: 0.85rem;
-    color: #495057;
+    color: var(--text-secondary);
     font-weight: 600;
   }
 }
 
+/* Individual attachment items */
 .attachment-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: white;
+  background: var(--surface);
   border-radius: 6px;
   margin-bottom: 0.5rem;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border);
   transition: all 0.2s ease;
 
   &:hover {
-    background: #f8f9fa;
-    border-color: #dee2e6;
+    background: var(--inbox-bg);
+    border-color: var(--primary);
   }
 }
 
@@ -336,7 +363,7 @@
 
 .attachment-name {
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--text);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -345,32 +372,34 @@
 
 .attachment-size {
   font-size: 0.8rem;
-  color: #868e96;
+  color: var(--text-muted);
 }
 
+/* Remove attachment action */
 .remove-attachment-btn {
   padding: 0.4rem;
-  background: #f1f3f5;
+  background: var(--muted);
   border: none;
   border-radius: 4px;
-  color: #868e96;
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #e9ecef;
-    color: #495057;
+    background: var(--border);
+    color: var(--text-secondary);
   }
 }
 
-/* Footer */
+/* ===== FOOTER & ACTIONS ===== */
+/* Bottom action buttons area */
 .compose-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e9ecef;
+  border-top: var(--inbox-border);
   background: var(--inbox-bg);
 }
 
@@ -380,20 +409,17 @@
   gap: 0.75rem;
 }
 
-.btn-primary,
-.btn-secondary,
-.btn-tertiary {
+/* ===== BUTTON STYLES ===== */
+/* Primary gradient button for submit actions */
+.btn-primary {
   padding: 0.7rem 1.5rem;
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
   color: white;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 
@@ -408,28 +434,180 @@
   }
 }
 
+/* Secondary outlined button */
 .btn-secondary {
-  background: white;
-  color: #667eea;
-  border: 1.5px solid #667eea;
+  padding: 0.7rem 1.5rem;
+  border: 1.5px solid var(--primary);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: var(--primary);
 
   &:hover {
     background: rgba(102, 126, 234, 0.05);
   }
 }
 
+/* Tertiary ghost button */
 .btn-tertiary {
+  padding: 0.7rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
   background: transparent;
-  color: #868e96;
-  border: 1px solid #dee2e6;
+  color: var(--text-secondary);
 
   &:hover {
-    background: #f1f3f5;
-    color: #495057;
+    background: var(--muted);
+    color: var(--text);
   }
 }
 
-/* Responsive */
+/* ===== AI CONTENT GENERATION SECTION ===== */
+/* Special section for AI-powered features */
+.ai-section {
+  padding: 1rem;
+  background: var(--panel);
+  border: 1px solid #e0d9ff;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.ai-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+
+.ai-hint {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.ai-input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* AI prompt input field */
+.ai-prompt-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: var(--muted);
+  color: var(--text);
+
+  &:focus {
+    background: var(--surface);
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--form-input-focus);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+/* Event scraping button - AI powered feature */
+.btn-scrape-event {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+/* Error message styling for scraping failures */
+.scraping-error {
+  padding: 0.75rem 1rem;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 0.85rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== DEBUG & UTILITIES ===== */
+.debug-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.debug-panel code {
+  font-size: 0.8rem;
+  background: #eef2ff;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
+.field.small input,
+.field.small select {
+  font-size: 0.85rem;
+}
+
+.message-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .compose-container {
     margin: 0;
@@ -454,6 +632,7 @@
     gap: 0.75rem;
   }
 
+  /* Stack fields vertically on mobile */
   .field-row {
     grid-template-columns: 1fr;
   }
@@ -480,196 +659,16 @@
     width: 100%;
   }
 
+  /* Single column label grid on mobile */
   .labels-dropdown {
     grid-template-columns: 1fr;
   }
-}
 
-.debug-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: #444;
-}
-
-.debug-panel code {
-  font-size: 0.8rem;
-  background: #eef2ff;
-  padding: 0.1rem 0.3rem;
-  border-radius: 4px;
-}
-
-.field.small input,
-.field.small select {
-  font-size: 0.85rem;
-}
-
-/* Message Section with Scraping Button */
-.message-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-/* AI Content Generation Section */
-.ai-section {
-  padding: 1rem;
-  background: linear-gradient(135deg, #f0f4ff 0%, #f0e8ff 100%);
-  border: 1px solid #e0d9ff;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-.ai-label {
-  display: block;
-  font-weight: 600;
-  color: #667eea;
-  font-size: 0.95rem;
-  margin-bottom: 0.4rem;
-}
-
-.ai-hint {
-  margin: 0 0 0.75rem 0;
-  color: #666;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.ai-input-group {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.ai-prompt-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    background: white;
-  }
-
-  &::placeholder {
-    color: #999;
-  }
-}
-
-.btn-scrape-event {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-}
-
-.btn-scrape-event:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-scrape-event:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-scrape-event:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-/* Scraping Error Message */
-.scraping-error {
-  padding: 0.75rem 1rem;
-  background: #fff3cd;
-  border-left: 4px solid #ffc107;
-  border-radius: 4px;
-  color: #856404;
-  font-size: 0.85rem;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Footer */
-.compose-footer {
-  padding: 1rem 1.5rem;
-  border-top: var(--inbox-border);
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  background: var(--inbox-bg);
-}
-
-/* Reuse inbox button styles */
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  padding: 0.6rem 1.2rem;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.btn-secondary:hover {
-  background: #e0e0e0;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .compose-container {
-    border-left: none;
-  }
-
-  .field-row {
+  .ai-input-group {
     flex-direction: column;
+  }
+
+  .btn-scrape-event {
+    width: 100%;
   }
 }
