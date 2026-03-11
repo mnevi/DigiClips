@@ -1,0 +1,44 @@
+.search-container {
+  max-width: 600px;
+  margin: 50px auto;
+  font-family: Arial, sans-serif;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 1px solid #dfe1e5;
+  border-radius: 24px;
+  outline: none;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+}
+
+.results-list {
+  margin-top: 30px;
+}
+
+.result-item {
+  margin-bottom: 25px;
+}
+
+.result-item h3 {
+  color: #1a0dab;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.result-item h3:hover {
+  text-decoration: underline;
+}
+
+.result-item p {
+  color: #4d5156;
+  font-size: 14px;
+  margin: 0;
+}
+
+.no-results {
+  color: #70757a;
+  text-align: center;
+}

@@ -1,0 +1,361 @@
+/**
+ * SETTINGS VIEW - User Configuration Interface
+ * Uses CSS variables for consistent theming and dark mode support
+ */
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--inbox-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* ===== HEADER ===== */
+/* Settings header matching inbox styling */
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: var(--inbox-header-bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Back button for navigation */
+.back-btn {
+  padding: 0.5rem 0.75rem;
+  background: var(--muted);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  color: var(--text);
+
+  &:hover {
+    background: var(--border);
+  }
+}
+
+/* Settings title - white on gradient header */
+.settings-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Success feedback message */
+.success-message {
+  padding: 0.75rem 1rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== CONTENT LAYOUT ===== */
+.settings-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ===== TABS ===== */
+/* Left navigation tabs for settings sections */
+.settings-tabs {
+  width: 200px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  padding: 1rem 0;
+  overflow-y: auto;
+}
+
+/* Individual tab button */
+.tab-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.875rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--sidebar-hover);
+    color: var(--primary);
+  }
+
+  /* Active tab with left accent line */
+  &.active {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+    border-left-color: var(--primary);
+    color: var(--primary);
+    font-weight: 500;
+  }
+}
+
+/* ===== SETTINGS PANEL ===== */
+/* Main content area for settings */
+.settings-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* Settings section container */
+.settings-section {
+  background: var(--panel-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.settings-section h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ===== SETTINGS ITEMS ===== */
+/* Individual setting row */
+.setting-item {
+  margin-bottom: 1.5rem;
+
+  /* Indented for nested settings */
+  &.indented {
+    margin-left: 2rem;
+  }
+}
+
+/* Label for setting */
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+
+  &.full-width {
+    width: 100%;
+  }
+
+  span {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+}
+
+/* Checkbox styling */
+.setting-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+
+  input[type='checkbox'] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+  }
+
+  span {
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+}
+
+/* ===== FORM INPUTS ===== */
+.input-number,
+.input-select,
+.input-textarea {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background: var(--muted);
+  color: var(--text);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--form-input-focus, rgba(102, 126, 234, 0.1));
+    background: var(--surface);
+  }
+}
+
+.input-textarea {
+  max-width: 100%;
+  resize: vertical;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Help text below inputs */
+.help-text {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ===== PREVIEW AREAS ===== */
+/* Theme preview box */
+.theme-preview {
+  padding: 1rem;
+  background: var(--muted);
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.preview-text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Email signature preview */
+.signature-preview {
+  padding: 1rem;
+  background: var(--muted);
+  border-radius: 6px;
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+}
+
+.signature-preview h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Preview content box */
+.preview-content {
+  padding: 0.75rem;
+  background: var(--surface);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.settings-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Primary and secondary buttons */
+.btn-primary,
+.btn-secondary {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+}
+
+.btn-secondary {
+  background: var(--muted);
+  color: var(--text);
+
+  &:hover {
+    background: var(--border);
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  /* Stack content vertically on mobile */
+  .settings-content {
+    flex-direction: column;
+  }
+
+  /* Convert tabs to horizontal scrolling on mobile */
+  .settings-tabs {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+  }
+
+  /* Tab button styling for mobile */
+  .tab-btn {
+    flex-shrink: 0;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.75rem 1.25rem;
+  }
+
+  /* Active tab indicator on mobile */
+  .tab-btn.active {
+    border-left: none;
+    border-bottom-color: var(--primary);
+  }
+
+  /* Adjust panel padding on mobile */
+  .settings-panel {
+    padding: 1.5rem;
+  }
+
+  /* Full width inputs on mobile */
+  .input-number,
+  .input-select {
+    max-width: 100%;
+  }
+}

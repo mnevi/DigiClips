@@ -7,7 +7,6 @@
  * - Provide email inbox, compose, and read views
  * - Manage email data and operations
  * - Handle email-specific routing
- * - User preferences and settings
  * 
  * Lazy Loading:
  * - This module is lazy-loaded via route: /mail
@@ -26,21 +25,23 @@
  *   loadChildren: () => import('./mail/mail-module').then(m => m.MailModule)
  * 
  * Current Status:
+ * - Placeholder module (empty declarations and imports)
+ * - Ready for feature expansion
+ * 
+ * Planned Features:
  * - ✅ Mail inbox component with email list
  * - ✅ Email compose component
  * - ✅ Email read/detail view
  * - ✅ Email search and filtering
  * - ✅ Email attachment handling
- * - ✅ Folder organization (sent, drafts, starred)
- * - ✅ Draft management with auto-save
- * - ✅ Label creation and management
- * - ✅ User settings and preferences
- * - ✅ Modern sleek UI design
+ * - ✅ Folder organization (sent, drafts, trash, etc.)
+ * - ✅ Real-time email notifications
+ * - ✅ Email sync service
  * 
- * Sub-Routes:
- * - /mail/inbox: Inbox view (default)
+ * Sub-Routes (to be implemented):
+ * - /mail/inbox: Inbox view
  * - /mail/compose: New email composition
- * - /mail/settings: User preferences
+ * - /mail/:id: Email detail/read view
  * - /mail/sent: Sent emails folder
  * - /mail/drafts: Draft emails folder
  */
@@ -50,7 +51,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Routes } from '@angular/router';
 import { InboxComponent } from './inbox/inbox';
 import { ComposeComponent } from './compose/compose';
-import { SettingsComponent } from './settings/settings';
 
 const routes: Routes = [
   {
@@ -60,10 +60,6 @@ const routes: Routes = [
   {
     path: 'compose',
     component: ComposeComponent
-  },
-  {
-    path: 'settings',
-    component: SettingsComponent
   },
   {
     path: '',
@@ -80,4 +76,3 @@ const routes: Routes = [
   ]
 })
 export class MailModule { }
-

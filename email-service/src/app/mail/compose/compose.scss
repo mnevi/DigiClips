@@ -1,50 +1,122 @@
+/**
+ * COMPOSE VIEW - Modern Email Composition Interface
+ * Uses CSS variables for consistent theming and dark mode support
+ */
+
 .compose-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: white;
-  border-left: 1px solid #e0e0e0;
+  background: var(--inbox-container);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  overflow: hidden;
 }
 
-/* Header */
+/* ===== HEADER ===== */
+/* Gradient header with primary accent colors for polished appearance */
 .compose-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
-  background: white;
+  padding: 1.25rem 1.75rem;
+  background: var(--inbox-header-bg);
+  box-shadow: 0 2px 8px var(--inbox-header-shadow);
+  border-bottom: var(--inbox-border);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Header title - white on dark header background */
 .compose-header h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: white;
+  letter-spacing: -0.5px;
 }
 
-.compose-subtitle {
-  margin-left: 0.75rem;
-  font-size: 0.85rem;
-  color: #999;
+/* Save status indicator - shows current save state with color feedback */
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+
+  /* Green indicator for saved state */
+  &.saved {
+    background: rgba(76, 175, 80, 0.2);
+    color: #c8e6c9;
+  }
+
+  /* Yellow indicator for saving in progress */
+  &.saving {
+    background: rgba(255, 193, 7, 0.2);
+    color: #fff9c4;
+  }
+
+  .status-text {
+    font-weight: 500;
+  }
+
+  .last-save-time {
+    font-size: 0.7rem;
+    opacity: 0.8;
+  }
 }
 
-/* Content */
-.compose-content {
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Close button - semi-transparent white on colored background */
+.close-btn {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+/* ===== FORM CONTAINER ===== */
+/* Main composition form with rounded elevation styling */
+.compose-form {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--inbox-bg);
+  border-radius: 8px 8px 0 0;
+  margin: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* ===== INPUT FIELDS ===== */
 .compose-fields {
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .field {
@@ -53,62 +125,467 @@
   gap: 0.4rem;
 }
 
+/* Two-column layout for recipient fields */
 .field-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
+/* Field labels - uppercase for visual hierarchy */
 .field label {
   font-size: 0.85rem;
-  color: #555;
-  font-weight: 500;
+  color: var(--inbox-text);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
-.field input,
-.field textarea,
-.field select {
-  padding: 0.75rem 0.9rem;
+/* Input styling - uses muted background with primary border on focus */
+.field-input,
+.field-textarea {
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  background: var(--muted);
+  color: var(--text);
+}
+
+/* Focus state - highlight with primary color and subtle shadow */
+.field-input:focus,
+.field-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--form-input-focus);
+}
+
+.field-textarea {
+  resize: vertical;
+  min-height: 200px;
+  font-size: 1rem;
+}
+
+/* ===== CC/BCC TOGGLE ===== */
+/* Dashed border button for optional fields */
+.toggle-ccbcc-btn {
+  align-self: flex-start;
+  padding: 0.5rem 0.85rem;
+  background: transparent;
+  color: var(--primary);
+  border: 1px dashed var(--primary);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.05);
+    border-color: var(--accent-1);
+    color: var(--accent-1);
+  }
+}
+
+/* ===== LABELS SECTION ===== */
+/* Organized section for email tagging/categorization */
+.labels-section {
+  padding: 1rem;
+  background: var(--muted);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.labels-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Toggle button to show/hide labels */
+.label-toggle-btn {
+  padding: 0.5rem 0.85rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
   font-size: 0.9rem;
-  border: 1px solid #ddd;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .label-count {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+}
+
+/* Grid layout for label options */
+.labels-dropdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.label-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
   border-radius: 6px;
   transition: all 0.2s ease;
+  color: var(--text);
+
+  input[type='checkbox'] {
+    cursor: pointer;
+  }
+
+  &:hover {
+    background: var(--surface);
+  }
+
+  .label-icon {
+    font-size: 1rem;
+  }
+
+  .label-name {
+    font-size: 0.85rem;
+  }
 }
 
-.field input:focus,
-.field textarea:focus,
-.field select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+/* Selected labels display area */
+.selected-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-textarea {
-  resize: vertical;
-  min-height: 180px;
+/* Color-coded label badges */
+.label-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  backdrop-filter: brightness(0.95);
 }
 
-/* Debug panel */
-.debug-panel {
-  margin-top: 1rem;
+/* ===== ATTACHMENTS SECTION ===== */
+/* File upload and management area */
+.attachments-section {
   padding: 1rem;
-  border-radius: 6px;
-  background: #f8faff;
-  border: 1px dashed #c7d2fe;
+  background: var(--muted);
+  border-radius: 8px;
+  border: 1px dashed var(--border);
 }
 
-.debug-title {
+.attachment-label {
+  cursor: pointer;
+}
+
+/* Dashed button for file upload */
+.attachment-button {
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  color: var(--primary);
+  border: 2px dashed var(--primary);
+  border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #4f46e5;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.05);
+  }
 }
 
+.file-input {
+  display: none;
+}
+
+.attachments-list {
+  margin-top: 1rem;
+
+  h4 {
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+}
+
+/* Individual attachment items */
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--surface);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--inbox-bg);
+    border-color: var(--primary);
+  }
+}
+
+.attachment-icon {
+  font-size: 1.25rem;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-name {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-size {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Remove attachment action */
+.remove-attachment-btn {
+  padding: 0.4rem;
+  background: var(--muted);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--border);
+    color: var(--text-secondary);
+  }
+}
+
+/* ===== FOOTER & ACTIONS ===== */
+/* Bottom action buttons area */
+.compose-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: var(--inbox-border);
+  background: var(--inbox-bg);
+}
+
+.footer-left,
+.footer-right {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* ===== BUTTON STYLES ===== */
+/* Primary gradient button for submit actions */
+.btn-primary {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Secondary outlined button */
+.btn-secondary {
+  padding: 0.7rem 1.5rem;
+  border: 1.5px solid var(--primary);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: var(--primary);
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.05);
+  }
+}
+
+/* Tertiary ghost button */
+.btn-tertiary {
+  padding: 0.7rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--muted);
+    color: var(--text);
+  }
+}
+
+/* ===== AI CONTENT GENERATION SECTION ===== */
+/* Special section for AI-powered features */
+.ai-section {
+  padding: 1rem;
+  background: var(--panel);
+  border: 1px solid #e0d9ff;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.ai-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+
+.ai-hint {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.ai-input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* AI prompt input field */
+.ai-prompt-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: var(--muted);
+  color: var(--text);
+
+  &:focus {
+    background: var(--surface);
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--form-input-focus);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+/* Event scraping button - AI powered feature */
+.btn-scrape-event {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+/* Error message styling for scraping failures */
+.scraping-error {
+  padding: 0.75rem 1rem;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 0.85rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== DEBUG & UTILITIES ===== */
 .debug-checkbox {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
-  color: #444;
+  color: var(--text-secondary);
 }
 
 .debug-panel code {
@@ -123,58 +600,75 @@ textarea {
   font-size: 0.85rem;
 }
 
-/* Footer */
-.compose-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e0e0e0;
+.message-section {
   display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  background: white;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-/* Reuse inbox button styles */
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  padding: 0.6rem 1.2rem;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.btn-secondary:hover {
-  background: #e0e0e0;
-}
-
-/* Responsive */
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
   .compose-container {
-    border-left: none;
+    margin: 0;
+    border-radius: 0;
   }
 
+  .compose-form {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .compose-header {
+    padding: 1rem;
+  }
+
+  .compose-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .compose-fields {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  /* Stack fields vertically on mobile */
   .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .field-textarea {
+    min-height: 150px;
+  }
+
+  .compose-footer {
     flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .footer-left,
+  .footer-right {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary {
+    width: 100%;
+  }
+
+  /* Single column label grid on mobile */
+  .labels-dropdown {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-input-group {
+    flex-direction: column;
+  }
+
+  .btn-scrape-event {
+    width: 100%;
   }
 }
