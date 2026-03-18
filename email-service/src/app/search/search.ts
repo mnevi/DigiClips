@@ -13,7 +13,7 @@ interface SearchResult {
   standalone: true,
   imports: [FormsModule, NgFor, NgIf],
   templateUrl: './search.html',
-  styleUrls: ['./search.css']
+  styleUrls: ['../mail/compose/compose.scss']
 })
 export class SearchComponent {
 

@@ -1,18 +1,30 @@
-<div class="alert-container">
-  <div class="alert-card">
-    <div class="alert-header">
-      <h1>Create Email Alerts</h1>
-      <p>An email will be sent to you whenever additional search results are found</p>
+<div class="compose-container">
+  <header class="compose-header">
+    <div class="header-left">
+      <h1>🔔 Create Email Alerts</h1>
     </div>
+  </header>
 
-      <div class="form-group">
+  <form class="compose-form">
+    <div class="compose-fields">
+      
+      <div class="field">
+        <p class="ai-hint">An email will be sent to you whenever additional search results are found.</p>
+      </div>
+
+      <div class="field">
         <label for="alert">Search Term</label>
         <input 
           id="alert"
+          type="text"
           placeholder="Enter your alert message"
+          class="field-input"
         />
+      </div>
+
+      <div class="field">
         <label for="frequency">Search Frequency</label>
-        <select id="frequency">
+        <select id="frequency" class="field-input">
           <option value="1m">1 minute</option>
           <option value="5m">5 minutes</option>
           <option value="1h">1 hour</option>
@@ -20,6 +32,14 @@
         </select>
       </div>
 
-      <button type="submit" class="add-alert-button">Create Alert</button>
-  </div>
+    </div>
+
+    <div class="compose-footer">
+      <div class="footer-left">
+        <button type="submit" class="btn-primary">
+          Create Alert
+        </button>
+      </div>
+    </div>
+  </form>
 </div>

@@ -1,22 +1,45 @@
-<div class="search-container">
-  <h1>Keyword Search</h1>
-  
-  <div class="search-bar">
-    <input 
-      type="text" 
-      [(ngModel)]="searchTerm" 
-      placeholder="Type to search..."
-    />
-  </div>
+<div class="compose-container">
+  <header class="compose-header">
+    <div class="header-left">
+      <h1>🔍 Keyword Search</h1>
+    </div>
+  </header>
 
-  <button class="compose-btn" (click)="addAlert()">Create Alert</button>
-
-  <div class="results-list">
-    @for (result of results(); track result.title) {
-      <div class="result-item">
-        <h3>{{ result.title }}</h3>
-        <p>{{ result.description }}</p>
+  <div class="compose-form">
+    <div class="compose-fields">
+      
+      <div class="field">
+        <label>Search</label>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          placeholder="Type to search..."
+          class="field-input"
+        />
       </div>
-    } 
+
+      <div class="field">
+        <button class="btn-secondary" (click)="addAlert()">
+          + Create Alert
+        </button>
+      </div>
+
+      <div class="attachments-section">
+        <label class="attachment-label">Results</label>
+        
+        <div class="attachments-list">
+          @for (result of results(); track result.title) {
+            <div class="attachment-item">
+              <span class="attachment-icon">📄</span>
+              <div class="attachment-info">
+                <div class="attachment-name">{{ result.title }}</div>
+                <div class="attachment-description">{{ result.description }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      
+    </div>
   </div>
 </div>
