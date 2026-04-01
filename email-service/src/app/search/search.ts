@@ -35,6 +35,6 @@ export class SearchComponent {
   }); 
 
   addAlert() {
-    this.router.navigate(['/alert']);
+    this.router.navigate(['/alert', this.searchTerm()]);
   }
 }

@@ -34,7 +34,7 @@ export const routes: Routes = [
     loadChildren: () => import('./mail/mail-module').then(m => m.MailModule) // Lazy load module
   },
 
-  { path: 'alert', component: AlertComponent},
+  { path: 'alert/:term', component: AlertComponent},
 
   { path: 'search', component: SearchComponent},
   
