@@ -1,21 +1,22 @@
 // server/src/index.ts
+import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import nodemailer from 'nodemailer';
 import cors from 'cors';
 import axios from 'axios';
-import prisma from './prismaClient';
+import { RAGQueryService } from './services/ragQuery';
+import { WebSearchService } from './services/webSearch';
 
-// brevo 
-// pass needs to be encrypted cuz github wont store it
-const smtp_auth = {
-  user: "a88de1001@smtp-brevo.com",
-  pass: Buffer.from("eHNtdHBzaWItZjM5YjhlOTVjNzM3NTY3ODlhYWNmOGEyNTg5OTIxNjNjZDQ3MDk1NDQzN2Q0NWVkZDQzY2NkZDAxYzk5MjI5ZC1zcEVOWFNLVmtHdUdhVTRx",
-    'base64').toString()
-}
+// Load environment variables
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Initialize RAG service
+const ragService = new RAGQueryService();
+const webSearchService = new WebSearchService();
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -23,10 +24,7 @@ function isValidEmail(email: string): boolean {
 
 function validateEmailField(field?: string): boolean {
   if (!field) return true;
-  const emails = field
-    .split(',')
-    .map((e) => e.trim())
-    .filter(Boolean);
+  const emails = field.split(',').map(e => e.trim()).filter(Boolean);
   return emails.every(isValidEmail);
 }
 
@@ -42,42 +40,30 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
     if (!validateEmailField(bcc)) return res.status(400).json({ error: 'Invalid bcc address' });
 
     // Nodemailer test account (Ethereal) - dev only
+    const testAccount = await nodemailer.createTestAccount();
+
     const transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
+      host: 'smtp.ethereal.email',
       port: 587,
       secure: false,
-      auth: smtp_auth
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+      }
     });
 
     const info = await transporter.sendMail({
-      from: '"DigiClips test Email Service" <tgdejesu@asu.edu>',
+      from: `"Angular Test" <${testAccount.user}>`,
       to,
       cc,
       bcc,
       subject: subject || '(no subject)',
-      text: body,
+      text: body
     });
 
     const previewUrl = nodemailer.getTestMessageUrl(info) || null;
 
-    //Store sent email in database
-    // NOTE: COMMENTING out just to suppress email failure for now...
-    /*const senderId = 1; // temporary demo user until auth/user session exists
-
-    const savedEmail = await prisma.email.create({
-      data: {
-        senderId,
-        to,
-        cc,
-        bcc,
-        subject: subject || '(no subject)',
-        body,
-      },
-    });*/
-
-    console.log("Sent email:", info.messageId);
-
-    return res.json({ ok: true, messageId: info.messageId, previewUrl, }); //email: savedEmail });
+    return res.json({ ok: true, messageId: info.messageId, previewUrl });
   } catch (err: any) {
     console.error('send-email error:', err);
     return res.status(500).json({ error: 'Failed to send email', details: err?.message });
@@ -93,13 +79,13 @@ app.get('/api/scrape-event', async (req: Request, res: Response) => {
   try {
     const OLLAMA_URL = process.env.OLLAMA_API_URL || 'http://localhost:11434';
     const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'mistral';
-
+    
     // Get custom prompt from query parameter
     const userPrompt = (req.query.prompt as string) || '';
 
     // Build the prompt for Ollama
     let ollamaPrompt: string;
-
+    
     if (userPrompt) {
       // Use user's custom prompt
       ollamaPrompt = `${userPrompt}
@@ -123,9 +109,7 @@ Make it realistic and informative.`;
     }
 
     console.log(`Attempting to connect to Ollama at ${OLLAMA_URL} with model: ${OLLAMA_MODEL}`);
-    console.log(
-      `User prompt: ${userPrompt ? userPrompt.substring(0, 100) + '...' : '(default event generation)'}`,
-    );
+    console.log(`User prompt: ${userPrompt ? userPrompt.substring(0, 100) + '...' : '(default event generation)'}`);
 
     try {
       // Call Ollama to generate content
@@ -135,9 +119,9 @@ Make it realistic and informative.`;
           model: OLLAMA_MODEL,
           prompt: ollamaPrompt,
           stream: false,
-          temperature: 0.7,
+          temperature: 0.7
         },
-        { timeout: 30000 }, // 30 second timeout
+        { timeout: 30000 } // 30 second timeout
       );
 
       // Get the generated response
@@ -149,7 +133,7 @@ Make it realistic and informative.`;
         return res.json({
           success: true,
           response: generatedContent.trim(),
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         });
       }
 
@@ -177,16 +161,16 @@ Make it realistic and informative.`;
             date: eventData.date || new Date().toLocaleString(),
             source: eventData.source || 'Ollama AI',
             relevance: eventData.relevance || 'medium',
-            category: eventData.category || 'Technology',
+            category: eventData.category || 'Technology'
           },
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         });
       } catch (parseError) {
         // If can't parse as JSON, return as raw generated content
         return res.json({
           success: true,
           response: generatedContent.trim(),
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         });
       }
     } catch (ollamaError: any) {
@@ -197,7 +181,7 @@ Make it realistic and informative.`;
         return res.json({
           success: false,
           error: 'Could not connect to AI backend. Make sure Ollama is running with: ollama serve',
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         });
       }
 
@@ -205,49 +189,44 @@ Make it realistic and informative.`;
       const fallbackEvents = [
         {
           title: 'Technology Conference 2026 - AI Ethics Panel',
-          description:
-            'Leading experts discuss the future of ethical AI development, regulation, and industry standards. Key topics include transparency, bias detection, and responsible AI deployment.',
+          description: 'Leading experts discuss the future of ethical AI development, regulation, and industry standards. Key topics include transparency, bias detection, and responsible AI deployment.',
           date: new Date().toLocaleString(),
           source: 'TechConf.io',
           relevance: 'high',
-          category: 'Technology',
+          category: 'Technology'
         },
         {
           title: 'Open Source AI Summit',
-          description:
-            'Major open-source AI projects showcase their latest developments. Ollama, LLaMA, and other free alternatives gaining significant traction in the developer community.',
+          description: 'Major open-source AI projects showcase their latest developments. Ollama, LLaMA, and other free alternatives gaining significant traction in the developer community.',
           date: new Date().toLocaleString(),
           source: 'OSS Weekly',
           relevance: 'high',
-          category: 'Technology',
+          category: 'Technology'
         },
         {
           title: 'Global Climate Summit Updates',
-          description:
-            'Latest developments from international climate negotiations including carbon reduction targets, renewable energy investments, and climate adaptation strategies.',
+          description: 'Latest developments from international climate negotiations including carbon reduction targets, renewable energy investments, and climate adaptation strategies.',
           date: new Date().toLocaleString(),
           source: 'ClimateNews.org',
           relevance: 'high',
-          category: 'Environment',
+          category: 'Environment'
         },
         {
           title: 'Innovation in Local Computing',
-          description:
-            'Renewed focus on local AI inference without cloud dependency. Users benefit from privacy, speed, and cost savings with edge computing solutions.',
+          description: 'Renewed focus on local AI inference without cloud dependency. Users benefit from privacy, speed, and cost savings with edge computing solutions.',
           date: new Date().toLocaleString(),
           source: 'TechDaily',
           relevance: 'medium',
-          category: 'Technology',
+          category: 'Technology'
         },
         {
           title: 'Space Exploration Milestone',
-          description:
-            'New advancements in lunar mission preparations. International space agencies announce collaborative projects for sustainable lunar settlements.',
+          description: 'New advancements in lunar mission preparations. International space agencies announce collaborative projects for sustainable lunar settlements.',
           date: new Date().toLocaleString(),
           source: 'SpaceWeekly.net',
           relevance: 'medium',
-          category: 'Science',
-        },
+          category: 'Science'
+        }
       ];
 
       const randomEvent = fallbackEvents[Math.floor(Math.random() * fallbackEvents.length)];
@@ -256,7 +235,7 @@ Make it realistic and informative.`;
         success: true,
         event: randomEvent,
         timestamp: new Date().toISOString(),
-        note: 'Using fallback data - Ollama not available. Start Ollama with: ollama serve',
+        note: 'Using fallback data - Ollama not available. Start Ollama with: ollama serve'
       });
     }
   } catch (err: any) {
@@ -265,223 +244,125 @@ Make it realistic and informative.`;
       success: false,
       error: 'Failed to generate content',
       details: err?.message,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   }
 });
 
-// Connect to PostgreSQL database (test)
-app.get('/api/test-db', async (_req, res) => {
+/**
+ * Modern AI Query Endpoint with Web Search & RAG
+ * Supports time-sensitive queries by automatically fetching current web results
+ */
+app.post('/api/query', async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany();
+    const { query, useWebSearch = true, model } = req.body;
 
-    res.json({
-      success: true,
-      message: 'Database connected',
-      users,
-    });
-  } catch (error) {
-    console.error('DB test failed: ', error);
-    res.status(500).json({
-      success: false,
-      message: 'Database connection failed',
-    });
-  }
-});
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'query field is required and must be a string' });
+    }
 
-app.get('/api/users', async (_req: Request, res: Response) => {
-  try {
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
+    console.log(`[API] Query received: "${query}"`);
+
+    const response = await ragService.queryWithContext(query, {
+      useWebSearch,
+      model
     });
 
     return res.json({
       success: true,
-      users,
+      query,
+      response,
+      timestamp: new Date().toISOString()
     });
-  } catch (error) {
-    console.error('get-users error:', error);
+  } catch (err: any) {
+    console.error('[API] Query error:', err);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch users',
+      error: err.message || 'Query failed',
+      timestamp: new Date().toISOString()
     });
   }
 });
 
-app.post('/api/users', async (req: Request, res: Response) => {
+/**
+ * Web Search Only Endpoint
+ * Fetch recent web results without querying Ollama
+ */
+app.post('/api/web-search', async (req: Request, res: Response) => {
   try {
-    const { email, name } = req.body || {};
+    const { query, numResults = 5 } = req.body;
 
-    if (!email) {
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'query field is required' });
+    }
+
+    if (!webSearchService.isConfigured()) {
       return res.status(400).json({
-        success: false,
-        message: 'email is required',
+        error: 'Web search not configured. Set SERPER_API_KEY in environment.'
       });
     }
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
+    console.log(`[Web Search] Query: "${query}"`);
+    const results = await webSearchService.searchWeb(query, numResults);
+
+    return res.json({
+      success: true,
+      query,
+      results,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err: any) {
+    console.error('[Web Search] Error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Web search failed',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Health Check Endpoint
+ * Check if Ollama and web search are available
+ */
+app.get('/api/health', async (req: Request, res: Response) => {
+  try {
+    const ollamaAvailable = await ragService.isOllamaAvailable();
+    const webSearchAvailable = webSearchService.isConfigured();
+    const availableModels = ollamaAvailable ? await ragService.getAvailableModels() : [];
+
+    return res.json({
+      status: 'ok',
+      services: {
+        ollama: {
+          available: ollamaAvailable,
+          url: process.env.OLLAMA_URL || 'http://localhost:11434',
+          models: availableModels
+        },
+        webSearch: {
+          available: webSearchAvailable,
+          configured: webSearchAvailable
+        }
       },
+      timestamp: new Date().toISOString()
     });
-
-    return res.status(201).json({
-      success: true,
-      user,
-    });
-  } catch (error: any) {
-    console.error('create-user error:', error);
-
-    if (error?.code === 'P2002') {
-      return res.status(409).json({
-        success: false,
-        message: 'User with this email already exists',
-      });
-    }
-
+  } catch (err: any) {
+    console.error('[Health] Error:', err);
     return res.status(500).json({
-      success: false,
-      message: 'Failed to create user',
+      status: 'error',
+      message: err.message,
+      timestamp: new Date().toISOString()
     });
   }
-});
-
-app.post('/api/drafts', async (req: Request, res: Response) => {
-  try {
-    const { userId, to, cc, bcc, subject, body } = req.body || {};
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: 'userId is required',
-      });
-    }
-
-    const draft = await prisma.draft.create({
-      data: {
-        userId: Number(userId),
-        to,
-        cc,
-        bcc,
-        subject,
-        body,
-      },
-    });
-
-    return res.status(201).json({
-      success: true,
-      draft,
-    });
-  } catch (error) {
-    console.error('create-draft error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to create draft',
-    });
-  }
-});
-
-app.put('/api/drafts/:id', async (req: Request, res: Response) => {
-  try {
-    const draftId = Number(req.params.id);
-    const { to, cc, bcc, subject, body } = req.body || {};
-
-    const draft = await prisma.draft.update({
-      where: { id: draftId },
-      data: {
-        to,
-        cc,
-        bcc,
-        subject,
-        body,
-      },
-    });
-
-    return res.json({
-      success: true,
-      draft,
-    });
-  } catch (error) {
-    console.error('update-draft error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to update draft',
-    });
-  }
-});
-
-app.get('/api/users/:userId/drafts', async (req: Request, res: Response) => {
-  try {
-    const userId = Number(req.params.userId);
-
-    const drafts = await prisma.draft.findMany({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' },
-    });
-
-    return res.json({
-      success: true,
-      drafts,
-    });
-  } catch (error) {
-    console.error('get-drafts error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch drafts',
-    });
-  }
-});
-
-app.delete('/api/drafts/:id', async (req: Request, res: Response) => {
-  try {
-    const draftId = Number(req.params.id);
-
-    await prisma.draft.delete({
-      where: { id: draftId },
-    });
-
-    return res.json({
-      success: true,
-      message: 'Draft deleted',
-    });
-  } catch (error) {
-    console.error('delete-draft error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to delete draft',
-    });
-  }
-});
-
-app.get('/api/users/:userId/emails', async (req: Request, res: Response) => {
-  try {
-    const userId = Number(req.params.userId);
-
-    const emails = await prisma.email.findMany({
-      where: { senderId: userId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return res.json({
-      success: true,
-      emails,
-    });
-  } catch (error) {
-    console.error('get-emails error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch emails',
-    });
-  }
-});
-
-app.get('/', (_req: Request, res: Response) => {
-  res.send('DigiClips backend is running');
 });
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`Mail backend (TS) listening on http://localhost:${PORT}`);
-  console.log('Using Auth: ', smtp_auth);
+  console.log(`\nAvailable endpoints:`);
+  console.log(`  POST /api/query - Modern AI queries with web search`);
+  console.log(`  POST /api/web-search - Web search only`);
+  console.log(`  GET /api/health - Check service health`);
+  console.log(`  GET /api/scrape-event - Legacy event generation`);
+  console.log(`  POST /api/send-email - Send emails\n`);
 });

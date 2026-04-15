@@ -172,6 +172,105 @@
           }
         </div>
 
+        <!-- Modern Search & Web Panel -->
+        <div class="search-section">
+          <div class="search-header">
+            <button 
+              type="button" 
+              (click)="toggleSearchPanel()" 
+              class="search-toggle-btn"
+              title="Toggle modern AI search with web integration"
+            >
+              {{ showSearchPanel() ? '▼' : '▶' }} 🔍 Modern Web Search & AI
+            </button>
+          </div>
+
+          @if (showSearchPanel()) {
+            <div class="search-panel">
+              <!-- Backend Status -->
+              @if (backendHealth()) {
+                <div class="backend-status">
+                  <small>
+                    Status: 
+                    @if (backendHealth().services.ollama.available) {
+                      <span class="status-ok">✓ Ollama</span>
+                    } @else {
+                      <span class="status-error">✗ Ollama</span>
+                    }
+                    @if (backendHealth().services.webSearch.available) {
+                      <span class="status-ok">✓ Web Search</span>
+                    } @else {
+                      <span class="status-disabled">✗ Web Search (Not configured)</span>
+                    }
+                  </small>
+                </div>
+              }
+
+              <!-- Search Tabs -->
+              <div class="search-tabs">
+                <button 
+                  type="button"
+                  (click)="selectedSearchTab.set('modern')"
+                  [class.active]="selectedSearchTab() === 'modern'"
+                  class="tab-btn"
+                >
+                  🤖 AI + Web
+                </button>
+                <button 
+                  type="button"
+                  (click)="selectedSearchTab.set('web')"
+                  [class.active]="selectedSearchTab() === 'web'"
+                  class="tab-btn"
+                >
+                  🌐 Web Only
+                </button>
+              </div>
+
+              <!-- Search Input -->
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  [(ngModel)]="searchQuery"
+                  name="searchQuery"
+                  placeholder="e.g., 'Latest AI developments 2026', 'Recent climate news'..."
+                  class="search-input"
+                  (keyup.enter)="selectedSearchTab() === 'modern' ? performModernSearch() : performWebSearch()"
+                />
+                <button
+                  type="button"
+                  (click)="selectedSearchTab() === 'modern' ? performModernSearch() : performWebSearch()"
+                  [disabled]="isSearching() || !searchQuery().trim()"
+                  class="search-btn"
+                >
+                  {{ isSearching() ? '⏳ Searching...' : '🔎 Search' }}
+                </button>
+              </div>
+
+              <!-- Error Message -->
+              @if (searchError()) {
+                <div class="search-error">
+                  ⚠️ {{ searchError() }}
+                </div>
+              }
+
+              <!-- Results -->
+              @if (searchResults()) {
+                <div class="search-results">
+                  {{ searchResults() }}
+                </div>
+
+                <button
+                  type="button"
+                  (click)="insertSearchResults()"
+                  class="insert-results-btn"
+                >
+                  ✓ Insert into Email
+                </button>
+              }
+            </div>
+          }
+        </div>
+
         <textarea 
           rows="50"
           name="body"

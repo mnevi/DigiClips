@@ -39,6 +39,13 @@ export class ComposeComponent implements OnInit, OnDestroy {
   saveStatus = signal<'saved' | 'saving' | 'unsaved'>('unsaved');
   lastSaveTime = signal<string>('');
   scrapingError = signal<string>('');
+  searchQuery = signal<string>('');
+  searchResults = signal<string>('');
+  selectedSearchTab = signal<'modern' | 'web'>('modern');
+  isSearching = signal(false);
+  searchError = signal<string>('');
+  showSearchPanel = signal(false);
+  backendHealth = signal<any>(null);
 
   draft: Draft = {
     id: 'draft-' + Date.now(),
@@ -71,6 +78,7 @@ export class ComposeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.allLabels.set(this.emailService.getLabels()());
     this.setupAutoSave();
+    this.checkBackendHealth();
   }
 
   ngOnDestroy(): void {
@@ -79,6 +87,92 @@ export class ComposeComponent implements OnInit, OnDestroy {
     }
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Check backend service health
+   */
+  checkBackendHealth(): void {
+    this.aiService.checkHealth().subscribe({
+      next: (health) => {
+        this.backendHealth.set(health);
+        const ollama = health.services.ollama.available ? '✓' : '✗';
+        const search = health.services.webSearch.available ? '✓' : '✗';
+        console.log(`Backend Status - Ollama: ${ollama}, Web Search: ${search}`);
+      },
+      error: (err) => console.error('Health check failed:', err)
+    });
+  }
+
+  /**
+   * Perform modern AI search with web results
+   */
+  performModernSearch(): void {
+    if (!this.searchQuery().trim()) return;
+    
+    this.isSearching.set(true);
+    this.searchError.set('');
+    
+    this.aiService.modernQuery(this.searchQuery()).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.searchResults.set(response.response);
+        this.isSearching.set(false);
+      },
+      error: (err) => {
+        this.searchError.set(err.message);
+        this.isSearching.set(false);
+      }
+    });
+  }
+
+  /**
+   * Perform web search only
+   */
+  performWebSearch(): void {
+    if (!this.searchQuery().trim()) return;
+    
+    this.isSearching.set(true);
+    this.searchError.set('');
+    
+    this.aiService.webSearch(this.searchQuery()).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.searchResults.set(response.results);
+        this.isSearching.set(false);
+      },
+      error: (err) => {
+        this.searchError.set(err.message);
+        this.isSearching.set(false);
+      }
+    });
+  }
+
+  /**
+   * Insert search results into email body
+   */
+  insertSearchResults(): void {
+    if (!this.searchResults()) return;
+    
+    const formatted = this.selectedSearchTab() === 'modern'
+      ? this.aiService.formatRAGResponse(this.searchQuery(), this.searchResults())
+      : this.aiService.formatWebResults(this.searchQuery(), this.searchResults());
+    
+    this.draft.body += '\n\n' + formatted;
+    this.searchResults.set('');
+    this.searchQuery.set('');
+  }
+
+  /**
+   * Toggle search panel visibility
+   */
+  toggleSearchPanel(): void {
+    this.showSearchPanel.set(!this.showSearchPanel());
+    if (this.showSearchPanel() && !this.backendHealth()) {
+      this.checkBackendHealth();
+    }
   }
 
   /**
