@@ -31,8 +31,8 @@ export interface Email {
 export interface Draft {
   id: string;
   to: string;
-  cc: string;
-  bcc: string;
+  cc?: string;
+  bcc?: string;
   subject: string;
   body: string;
   date: string;
@@ -40,6 +40,8 @@ export interface Draft {
   labels?: string[];
   attachments?: Attachment[];
   lastSaved?: string;
+  backendId?: number; // ID from backend for syncing
+  preview?: string;
 }
 
 export interface Label {
@@ -68,7 +70,7 @@ export interface Attachment {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class EmailService {
   private emails = signal<Email[]>([]);
@@ -78,6 +80,7 @@ export class EmailService {
 
   constructor(private http: HttpClient) {
     this.initializeData();
+    this.loadAndMergeDrafts();
   }
 
   /**
@@ -162,40 +165,43 @@ export class EmailService {
         id: 1,
         from: 'john@example.com',
         subject: 'Project Update - Q1 2026',
-        preview: 'Great progress on the new email service. The UI components are looking excellent...',
+        preview:
+          'Great progress on the new email service. The UI components are looking excellent...',
         body: 'Great progress on the new email service. The UI components are looking excellent. The team has been very productive this sprint.',
         date: 'Today 10:30 AM',
         isRead: false,
         avatar: 'JO',
         isFlagged: false,
         labels: ['work'],
-        isSent: false
+        isSent: false,
       },
       {
         id: 2,
         from: 'sarah@company.com',
         subject: 'Meeting Scheduled - Next Week',
-        preview: 'Following up on our earlier discussion. I\'ve scheduled the team meeting for next Wednesday...',
-        body: 'Following up on our earlier discussion. I\'ve scheduled the team meeting for next Wednesday at 2:00 PM. Please confirm your attendance.',
+        preview:
+          "Following up on our earlier discussion. I've scheduled the team meeting for next Wednesday...",
+        body: "Following up on our earlier discussion. I've scheduled the team meeting for next Wednesday at 2:00 PM. Please confirm your attendance.",
         date: 'Yesterday 2:45 PM',
         isRead: true,
         avatar: 'SA',
         isFlagged: true,
         labels: ['work', 'meetings'],
-        isSent: false
+        isSent: false,
       },
       {
         id: 3,
         from: 'team@project.dev',
         subject: 'Weekly Digest - Development Update',
-        preview: 'This week\'s development summary: 15 pull requests merged, 23 issues closed, and 5...',
-        body: 'This week\'s development summary: 15 pull requests merged, 23 issues closed, and 5 new features implemented.',
+        preview:
+          "This week's development summary: 15 pull requests merged, 23 issues closed, and 5...",
+        body: "This week's development summary: 15 pull requests merged, 23 issues closed, and 5 new features implemented.",
         date: 'Feb 2, 2:15 PM',
         isRead: true,
         avatar: 'PD',
         isFlagged: false,
         labels: ['work'],
-        isSent: false
+        isSent: false,
       },
       {
         id: 4,
@@ -208,34 +214,36 @@ export class EmailService {
         avatar: 'NO',
         isFlagged: false,
         labels: ['notifications'],
-        isSent: false
+        isSent: false,
       },
       {
         id: 5,
         from: 'michael@tech.com',
         subject: 'Code Review Request',
-        preview: 'Please review the authentication module. I\'ve implemented several security improvements...',
-        body: 'Please review the authentication module. I\'ve implemented several security improvements and would appreciate your feedback.',
+        preview:
+          "Please review the authentication module. I've implemented several security improvements...",
+        body: "Please review the authentication module. I've implemented several security improvements and would appreciate your feedback.",
         date: 'Feb 1, 4:20 PM',
         isRead: true,
         avatar: 'MI',
         isFlagged: true,
         labels: ['work'],
-        isSent: false
+        isSent: false,
       },
       {
         id: 6,
         from: 'design@studio.io',
         subject: 'New Design Mockups Ready',
-        preview: 'The new dashboard designs are complete. I\'ve uploaded them to the shared folder...',
-        body: 'The new dashboard designs are complete. I\'ve uploaded them to the shared folder for your review.',
+        preview:
+          "The new dashboard designs are complete. I've uploaded them to the shared folder...",
+        body: "The new dashboard designs are complete. I've uploaded them to the shared folder for your review.",
         date: 'Jan 31, 11:00 AM',
         isRead: true,
         avatar: 'DE',
         isFlagged: false,
         labels: ['design'],
-        isSent: false
-      }
+        isSent: false,
+      },
     ];
   }
 
@@ -248,7 +256,7 @@ export class EmailService {
       { id: 'personal', name: 'Personal', color: '#f093fb', icon: '👤' },
       { id: 'meetings', name: 'Meetings', color: '#4facfe', icon: '📅' },
       { id: 'design', name: 'Design', icon: '🎨', color: '#fa709a' },
-      { id: 'notifications', name: 'Notifications', color: '#30b0fe', icon: '🔔' }
+      { id: 'notifications', name: 'Notifications', color: '#30b0fe', icon: '🔔' },
     ];
   }
 
@@ -265,8 +273,44 @@ export class EmailService {
       defaultReplyFormat: 'plain',
       showPreview: true,
       compactView: false,
-      notificationsEnabled: true
+      notificationsEnabled: true,
     };
+  }
+
+  /**
+   * Sync draft to backend (create or update)
+   */
+
+  private async syncDraftToBackend(draft: Draft): Promise<void> {
+    try {
+      const payload = {
+        userId: 1,
+        to: draft.to,
+        cc: draft.cc,
+        bcc: draft.bcc,
+        subject: draft.subject,
+        body: draft.body,
+      };
+
+      if (!draft.backendId) {
+        const res = await fetch('/api/drafts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        draft.backendId = data.draft.id;
+      } else {
+        await fetch(`/api/drafts/${draft.backendId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+    } catch (err) {
+      console.error('Backend draft sync failed:', err);
+    }
   }
 
   /**
@@ -315,7 +359,7 @@ export class EmailService {
       id: name.toLowerCase().replace(/\s+/g, '-'),
       name,
       color,
-      icon
+      icon,
     };
     const current = this.labels();
     this.labels.set([...current, newLabel]);
@@ -328,25 +372,25 @@ export class EmailService {
    */
   deleteLabel(labelId: string): void {
     const current = this.labels();
-    this.labels.set(current.filter(l => l.id !== labelId));
+    this.labels.set(current.filter((l) => l.id !== labelId));
     localStorage.setItem('email-labels', JSON.stringify(this.labels()));
 
     // Remove label from all emails and drafts
     const emails = this.emails();
     this.emails.set(
-      emails.map(e => ({
+      emails.map((e) => ({
         ...e,
-        labels: e.labels?.filter(l => l !== labelId)
-      }))
+        labels: e.labels?.filter((l) => l !== labelId),
+      })),
     );
     localStorage.setItem('email-list', JSON.stringify(this.emails()));
 
     const drafts = this.drafts();
     this.drafts.set(
-      drafts.map(d => ({
+      drafts.map((d) => ({
         ...d,
-        labels: d.labels?.filter(l => l !== labelId)
-      }))
+        labels: d.labels?.filter((l) => l !== labelId),
+      })),
     );
     localStorage.setItem('email-drafts', JSON.stringify(this.drafts()));
   }
@@ -355,35 +399,55 @@ export class EmailService {
    * Save a draft email
    */
   saveDraft(draft: Draft): void {
-    const existing = this.drafts().find(d => d.id === draft.id);
+    const existing = this.drafts().find((d) => d.id === draft.id);
     const updated = {
       ...draft,
-      lastSaved: new Date().toLocaleString()
+      lastSaved: new Date().toLocaleString(),
     };
 
     if (existing) {
-      const drafts = this.drafts().map(d => (d.id === draft.id ? updated : d));
+      const drafts = this.drafts().map((d) => (d.id === draft.id ? updated : d));
       this.drafts.set(drafts);
     } else {
       this.drafts.set([...this.drafts(), updated]);
     }
 
     localStorage.setItem('email-drafts', JSON.stringify(this.drafts()));
+
+    // NEW: sync to backend
+    this.syncDraftToBackend(updated).then(() => {
+      const drafts = this.drafts().map((d) =>
+        d.id === updated.id ? { ...d, backendId: updated.backendId } : d,
+      );
+      this.drafts.set(drafts);
+      localStorage.setItem('email-drafts', JSON.stringify(this.drafts()));
+    });
   }
 
   /**
    * Delete a draft
    */
-  deleteDraft(draftId: string): void {
-    const drafts = this.drafts();
-    this.drafts.set(drafts.filter(d => d.id !== draftId));
+  async deleteDraft(draftId: string): Promise<void> {
+    const draftToDelete = this.drafts().find((d) => d.id === draftId);
+
+    this.drafts.set(this.drafts().filter((d) => d.id !== draftId));
     localStorage.setItem('email-drafts', JSON.stringify(this.drafts()));
+
+    if (draftToDelete?.backendId) {
+      try {
+        await fetch(`/api/drafts/${draftToDelete.backendId}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error('Failed to delete backend draft:', err);
+      }
+    }
   }
 
   /**
    * Send an email (creates a sent email record)
    */
-  sendEmail(draft: Draft): Promise<any> {
+  async sendEmail(draft: Draft): Promise<any> {
     const sentEmail: Email = {
       id: Date.now(),
       from: 'you@example.com',
@@ -396,10 +460,19 @@ export class EmailService {
       avatar: 'YO',
       isFlagged: false,
       labels: draft.labels,
-      isSent: true
+      isSent: true,
     };
 
-    return this.http.post<any>('/api/send-email', sentEmail).toPromise().then(res => {
+    const payload = {
+      to: draft.to,
+      cc: draft.cc,
+      bcc: draft.bcc,
+      subject: draft.subject,
+      body: draft.body,
+    };
+
+    try {
+      const res = await this.http.post<any>('/api/send-email', payload).toPromise();
       // Store sent email in localStorage
       const sent = localStorage.getItem('email-sent');
       const sentEmails = sent ? JSON.parse(sent) : [];
@@ -407,10 +480,55 @@ export class EmailService {
       localStorage.setItem('email-sent', JSON.stringify(sentEmails));
 
       // Delete the draft
-      this.deleteDraft(draft.id);
+      await this.deleteDraft(draft.id);
 
       return res;
+    } catch (err) {
+      console.error('Failed to send email:', err);
+      throw err;
+    }
+  }
+
+  async fetchBackendDrafts(): Promise<any[]> {
+    try {
+      const res = await fetch('/api/users/1/drafts');
+      const data = await res.json();
+      return data.drafts || [];
+    } catch (err) {
+      console.error('Failed to fetch backend drafts:', err);
+      return [];
+    }
+  }
+
+  async loadAndMergeDrafts(): Promise<void> {
+    const backendDrafts = await this.fetchBackendDrafts();
+    const localDrafts = this.drafts();
+    const mergedDrafts = [...localDrafts];
+
+    backendDrafts.forEach((bd: any) => {
+      const exists = mergedDrafts.some((d) => d.backendId === bd.id);
+
+      if (!exists) {
+        mergedDrafts.push({
+          id: 'backend-' + bd.id,
+          backendId: bd.id,
+          to: bd.to || '',
+          cc: bd.cc || '',
+          bcc: bd.bcc || '',
+          subject: bd.subject || '',
+          body: bd.body || '',
+          preview: (bd.body || '').substring(0, 100),
+          date: new Date(bd.updatedAt).toLocaleString(),
+          avatar: 'BE',
+          labels: [],
+          attachments: [],
+          lastSaved: new Date(bd.updatedAt).toLocaleString(),
+        });
+      }
     });
+
+    this.drafts.set(mergedDrafts);
+    localStorage.setItem('email-drafts', JSON.stringify(mergedDrafts));
   }
 
   /**
@@ -418,9 +536,7 @@ export class EmailService {
    */
   toggleFlag(emailId: number): void {
     const emails = this.emails();
-    const updated = emails.map(e =>
-      e.id === emailId ? { ...e, isFlagged: !e.isFlagged } : e
-    );
+    const updated = emails.map((e) => (e.id === emailId ? { ...e, isFlagged: !e.isFlagged } : e));
     this.emails.set(updated);
     localStorage.setItem('email-list', JSON.stringify(updated));
   }
@@ -430,7 +546,7 @@ export class EmailService {
    */
   addLabelToEmail(emailId: number, labelId: string): void {
     const emails = this.emails();
-    const updated = emails.map(e => {
+    const updated = emails.map((e) => {
       if (e.id === emailId) {
         const labels = e.labels || [];
         if (!labels.includes(labelId)) {
@@ -448,10 +564,8 @@ export class EmailService {
    */
   removeLabelFromEmail(emailId: number, labelId: string): void {
     const emails = this.emails();
-    const updated = emails.map(e =>
-      e.id === emailId
-        ? { ...e, labels: e.labels?.filter(l => l !== labelId) }
-        : e
+    const updated = emails.map((e) =>
+      e.id === emailId ? { ...e, labels: e.labels?.filter((l) => l !== labelId) } : e,
     );
     this.emails.set(updated);
     localStorage.setItem('email-list', JSON.stringify(updated));
