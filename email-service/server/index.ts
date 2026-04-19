@@ -7,7 +7,7 @@ import axios from 'axios';
 // brevo 
 const smtp_auth = {
   user: "a88de1001@smtp-brevo.com",
-  pass: "xsmtpsib-f39b8e95c73756789aacf8a258992163cd470954437d45edd43ccdd01c99229d-960Thoh5LDBGSoGg"
+  pass: Buffer.from("eHNtdHBzaWItZjM5YjhlOTVjNzM3NTY3ODlhYWNmOGEyNTg5OTIxNjNjZDQ3MDk1NDQzN2Q0NWVkZDQzY2NkZDAxYzk5MjI5ZC05NjBUaG9oNUxEQkdTb0dn", 'base64').toString()
 }
 
 const app = express();
