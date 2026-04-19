@@ -38,6 +38,9 @@ cd email-service
 npm install
 ng serve --proxy-config ./proxy.conf.json
 
+or
+npm run ng -- serve --proxy-config ./proxy.conf.json
+
 # 5. Open browser
 # http://localhost:4200
 ```

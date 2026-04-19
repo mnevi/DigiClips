@@ -4,6 +4,12 @@ import nodemailer from 'nodemailer';
 import cors from 'cors';
 import axios from 'axios';
 
+// brevo 
+const smtp_auth = {
+  user: "a88de1001@smtp-brevo.com",
+  pass: "xsmtpsib-f39b8e95c73756789aacf8a258992163cd470954437d45edd43ccdd01c99229d-960Thoh5LDBGSoGg"
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -30,20 +36,15 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
     if (!validateEmailField(bcc)) return res.status(400).json({ error: 'Invalid bcc address' });
 
     // Nodemailer test account (Ethereal) - dev only
-    const testAccount = await nodemailer.createTestAccount();
-
     const transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
+      host: 'smtp-relay.brevo.com',
       port: 587,
       secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass
-      }
+      auth: smtp_auth
     });
 
     const info = await transporter.sendMail({
-      from: `"Angular Test" <${testAccount.user}>`,
+      from: '"DigiClips test Email Service" <tgdejesu@asu.edu>',
       to,
       cc,
       bcc,
@@ -52,6 +53,8 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
     });
 
     const previewUrl = nodemailer.getTestMessageUrl(info) || null;
+
+    console.log("Sent email:", info.messageId);
 
     return res.json({ ok: true, messageId: info.messageId, previewUrl });
   } catch (err: any) {
@@ -242,4 +245,5 @@ Make it realistic and informative.`;
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`Mail backend (TS) listening on http://localhost:${PORT}`);
+  console.log('Using Auth: ', smtp_auth);
 });
