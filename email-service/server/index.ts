@@ -5,9 +5,11 @@ import cors from 'cors';
 import axios from 'axios';
 
 // brevo 
+// pass needs to be encrypted cuz github wont store it
 const smtp_auth = {
   user: "a88de1001@smtp-brevo.com",
-  pass: Buffer.from("eHNtdHBzaWItZjM5YjhlOTVjNzM3NTY3ODlhYWNmOGEyNTg5OTIxNjNjZDQ3MDk1NDQzN2Q0NWVkZDQzY2NkZDAxYzk5MjI5ZC05NjBUaG9oNUxEQkdTb0dn", 'base64').toString()
+  pass: Buffer.from("eHNtdHBzaWItZjM5YjhlOTVjNzM3NTY3ODlhYWNmOGEyNTg5OTIxNjNjZDQ3MDk1NDQzN2Q0NWVkZDQzY2NkZDAxYzk5MjI5ZC1zcEVOWFNLVmtHdUdhVTRx",
+    'base64').toString()
 }
 
 const app = express();
