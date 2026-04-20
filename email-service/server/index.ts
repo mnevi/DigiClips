@@ -5,6 +5,14 @@ import cors from 'cors';
 import axios from 'axios';
 import prisma from './prismaClient';
 
+// brevo 
+// pass needs to be encrypted cuz github wont store it
+const smtp_auth = {
+  user: "a88de1001@smtp-brevo.com",
+  pass: Buffer.from("eHNtdHBzaWItZjM5YjhlOTVjNzM3NTY3ODlhYWNmOGEyNTg5OTIxNjNjZDQ3MDk1NDQzN2Q0NWVkZDQzY2NkZDAxYzk5MjI5ZC1zcEVOWFNLVmtHdUdhVTRx",
+    'base64').toString()
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -34,20 +42,15 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
     if (!validateEmailField(bcc)) return res.status(400).json({ error: 'Invalid bcc address' });
 
     // Nodemailer test account (Ethereal) - dev only
-    const testAccount = await nodemailer.createTestAccount();
-
     const transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
+      host: 'smtp-relay.brevo.com',
       port: 587,
       secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
+      auth: smtp_auth
     });
 
     const info = await transporter.sendMail({
-      from: `"Angular Test" <${testAccount.user}>`,
+      from: '"DigiClips test Email Service" <tgdejesu@asu.edu>',
       to,
       cc,
       bcc,
@@ -70,6 +73,8 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
         body,
       },
     });
+
+    console.log("Sent email:", info.messageId);
 
     return res.json({ ok: true, messageId: info.messageId, previewUrl, email: savedEmail });
   } catch (err: any) {
@@ -477,4 +482,5 @@ app.get('/', (_req: Request, res: Response) => {
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () => {
   console.log(`Mail backend (TS) listening on http://localhost:${PORT}`);
+  console.log('Using Auth: ', smtp_auth);
 });
