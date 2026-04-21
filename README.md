@@ -20,6 +20,9 @@ A modern email application with **AI-powered event scraping** using Ollama (free
 
 ### Setup
 
+NOTE: SQL Database implementations may change depending on your setup. Read prisma docs.
+Currently connects to server with name `postgres` and password `postgres`. Database is named `digiclips_db`.
+
 ```bash
 # 1. Install Ollama & download model (one-time)
 # Visit: https://ollama.ai → Download → Install
@@ -28,12 +31,18 @@ ollama pull mistral
 # 2. Start Ollama (Terminal 1)
 ollama serve
 
-# 3. Start Backend (Terminal 2)
+# 3. Start PostgreSQL Server
+pg_ctl start
+... or some other chosen method compatible with prisma -- DATABASE_URL is defined in .env
+
+# 4. Start Backend (Terminal 2)
 cd email-service/server
+npx prisma generate
+npx prisma migrate dev
 npm install
 npm run dev
 
-# 4. Start Frontend (Terminal 3)
+# 5. Start Frontend (Terminal 3)
 cd email-service
 npm install
 ng serve --proxy-config ./proxy.conf.json
@@ -41,7 +50,7 @@ ng serve --proxy-config ./proxy.conf.json
 or
 npm run ng -- serve --proxy-config ./proxy.conf.json
 
-# 5. Open browser
+# 6. Open browser
 # http://localhost:4200
 ```
 

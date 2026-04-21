@@ -61,7 +61,8 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
     const previewUrl = nodemailer.getTestMessageUrl(info) || null;
 
     //Store sent email in database
-    const senderId = 1; // temporary demo user until auth/user session exists
+    // NOTE: COMMENTING out just to suppress email failure for now...
+    /*const senderId = 1; // temporary demo user until auth/user session exists
 
     const savedEmail = await prisma.email.create({
       data: {
@@ -72,11 +73,11 @@ app.post('/api/send-email', async (req: Request, res: Response) => {
         subject: subject || '(no subject)',
         body,
       },
-    });
+    });*/
 
     console.log("Sent email:", info.messageId);
 
-    return res.json({ ok: true, messageId: info.messageId, previewUrl, email: savedEmail });
+    return res.json({ ok: true, messageId: info.messageId, previewUrl, }); //email: savedEmail });
   } catch (err: any) {
     console.error('send-email error:', err);
     return res.status(500).json({ error: 'Failed to send email', details: err?.message });
