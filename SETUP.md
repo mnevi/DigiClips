@@ -150,7 +150,8 @@ All three must be running simultaneously for the app to work.
 ## 🎯 Next Steps
 
 - 📖 Read [CONFIGURATION.md](./CONFIGURATION.md) to customize models
-- 🏗️ Read [ARCHITECTURE.md](./ARCHITECTURE.md) to understand how it works
+- � Read [email-service/server/RAG_FEATURES.md](./email-service/server/RAG_FEATURES.md) for modern AI query features with web search
+- �🏗️ Read [ARCHITECTURE.md](./ARCHITECTURE.md) to understand how it works
 - 📱 Read [HOW_IT_WORKS.md](./HOW_IT_WORKS.md) for feature details
 
 ---
