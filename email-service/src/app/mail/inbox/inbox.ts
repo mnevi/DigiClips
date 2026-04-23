@@ -59,22 +59,17 @@ export class InboxComponent implements OnInit {
   loadData() {
     this.emails.set(this.emailService.getEmails()());
     this.drafts.set(this.emailService.getDrafts()());
+    this.sentEmails.set(this.emailService.getSentEmails()());
     this.labels.set(this.emailService.getLabels()());
-    this.loadSentEmails();
+    void this.loadSentEmails();
   }
 
   /**
-   * Load sent emails from localStorage
+   * Load sent emails from the email service and backend cache
    */
-  loadSentEmails() {
-    const savedSent = localStorage.getItem('email-sent');
-    if (savedSent) {
-      try {
-        this.sentEmails.set(JSON.parse(savedSent));
-      } catch (e) {
-        this.sentEmails.set([]);
-      }
-    }
+  async loadSentEmails() {
+    await this.emailService.loadAndMergeSentEmails();
+    this.sentEmails.set(this.emailService.getSentEmails()());
   }
 
   /**
@@ -202,15 +197,14 @@ export class InboxComponent implements OnInit {
   /**
    * Delete an email
    */
-  deleteEmail(email: Email) {
+  async deleteEmail(email: Email) {
     const folder = this.currentFolder();
     if (folder === 'sent') {
-      const sent = this.sentEmails();
-      this.sentEmails.set(sent.filter(e => e.id !== email.id));
-      localStorage.setItem('email-sent', JSON.stringify(this.sentEmails()));
+      await this.emailService.deleteSentEmail(email.id);
+      this.sentEmails.set(this.emailService.getSentEmails()());
     } else {
       const emails = this.emails();
-      this.emails.set(emails.filter(e => e.id !== email.id));
+      this.emails.set(emails.filter((e) => e.id !== email.id));
     }
     this.closeEmail();
   }

@@ -11,6 +11,7 @@
 
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth';
 
 export interface Email {
   id: number;
@@ -75,12 +76,19 @@ export interface Attachment {
 export class EmailService {
   private emails = signal<Email[]>([]);
   private drafts = signal<Draft[]>([]);
+  private sentEmails = signal<Email[]>([]);
   private labels = signal<Label[]>([]);
   private userPreferences = signal<UserPreferences>(this.getDefaultPreferences());
+  private backendUserId: number | null = null;
+  private backendUserIdPromise: Promise<number | null> | null = null;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+  ) {
     this.initializeData();
-    this.loadAndMergeDrafts();
+    void this.loadAndMergeDrafts();
+    void this.loadAndMergeSentEmails();
   }
 
   /**
@@ -89,6 +97,7 @@ export class EmailService {
   private initializeData(): void {
     this.loadEmails();
     this.loadDrafts();
+    this.loadSentEmails();
     this.loadLabels();
     this.loadUserPreferences();
   }
@@ -120,6 +129,20 @@ export class EmailService {
         this.drafts.set(JSON.parse(stored));
       } catch (e) {
         this.drafts.set([]);
+      }
+    }
+  }
+
+  /**
+   * Load sent emails from storage
+   */
+  private loadSentEmails(): void {
+    const stored = localStorage.getItem('email-sent');
+    if (stored) {
+      try {
+        this.sentEmails.set(JSON.parse(stored));
+      } catch (e) {
+        this.sentEmails.set([]);
       }
     }
   }
@@ -277,14 +300,111 @@ export class EmailService {
     };
   }
 
+  private getCurrentUserEmail(): string {
+    const currentUser = this.authService.getCurrentUser()?.trim().toLowerCase();
+
+    if (currentUser && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentUser)) {
+      return currentUser;
+    }
+
+    return 'demo@digiclips.local';
+  }
+
+  private getCurrentUserName(): string {
+    const email = this.getCurrentUserEmail();
+    const localPart = email.split('@')[0] || 'Demo User';
+
+    return localPart
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  private getCurrentUserAvatar(): string {
+    return this.getCurrentUserName()
+      .split(' ')
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2) || 'DU';
+  }
+
+  private persistSentEmails(sentEmails: Email[]): void {
+    this.sentEmails.set(sentEmails);
+    localStorage.setItem('email-sent', JSON.stringify(sentEmails));
+  }
+
+  private toSentEmail(record: any): Email {
+    return {
+      id: record.id ?? Date.now(),
+      from: this.getCurrentUserEmail(),
+      to: record.to || '',
+      subject: record.subject || '(no subject)',
+      preview: (record.body || '').substring(0, 100),
+      body: record.body || '',
+      date: record.createdAt ? new Date(record.createdAt).toLocaleString() : new Date().toLocaleString(),
+      isRead: true,
+      avatar: this.getCurrentUserAvatar(),
+      isFlagged: false,
+      labels: [],
+      isSent: true,
+    };
+  }
+
+  private async ensureBackendUserId(): Promise<number | null> {
+    if (this.backendUserId) {
+      return this.backendUserId;
+    }
+
+    if (!this.backendUserIdPromise) {
+      this.backendUserIdPromise = this.resolveBackendUserId().finally(() => {
+        this.backendUserIdPromise = null;
+      });
+    }
+
+    return this.backendUserIdPromise;
+  }
+
+  private async resolveBackendUserId(): Promise<number | null> {
+    try {
+      const response = await fetch('/api/users/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: this.getCurrentUserEmail(),
+          name: this.getCurrentUserName(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to resolve backend user (${response.status})`);
+      }
+
+      const data = await response.json();
+      this.backendUserId = data.user?.id ?? null;
+      return this.backendUserId;
+    } catch (err) {
+      console.error('Failed to resolve backend user:', err);
+      return null;
+    }
+  }
+
   /**
    * Sync draft to backend (create or update)
    */
 
   private async syncDraftToBackend(draft: Draft): Promise<void> {
     try {
+      const userId = await this.ensureBackendUserId();
+
+      if (!userId) {
+        return;
+      }
+
       const payload = {
-        userId: 1,
+        userId,
         to: draft.to,
         cc: draft.cc,
         bcc: draft.bcc,
@@ -325,6 +445,13 @@ export class EmailService {
    */
   getDrafts() {
     return this.drafts.asReadonly();
+  }
+
+  /**
+   * Get all sent emails
+   */
+  getSentEmails() {
+    return this.sentEmails.asReadonly();
   }
 
   /**
@@ -463,21 +590,25 @@ export class EmailService {
       isSent: true,
     };
 
-    const payload = {
-      to: draft.to,
-      cc: draft.cc,
-      bcc: draft.bcc,
-      subject: draft.subject,
-      body: draft.body,
-    };
-
     try {
+      const userId = await this.ensureBackendUserId();
+      const payload = {
+        userId: userId || undefined,
+        userEmail: this.getCurrentUserEmail(),
+        userName: this.getCurrentUserName(),
+        to: draft.to,
+        cc: draft.cc,
+        bcc: draft.bcc,
+        subject: draft.subject,
+        body: draft.body,
+      };
+
       const res = await this.http.post<any>('/api/send-email', payload).toPromise();
-      // Store sent email in localStorage
-      const sent = localStorage.getItem('email-sent');
-      const sentEmails = sent ? JSON.parse(sent) : [];
-      sentEmails.push(sentEmail);
-      localStorage.setItem('email-sent', JSON.stringify(sentEmails));
+      const persistedSentEmail = res?.email ? this.toSentEmail(res.email) : sentEmail;
+      this.persistSentEmails([
+        persistedSentEmail,
+        ...this.sentEmails().filter((email) => email.id !== persistedSentEmail.id),
+      ]);
 
       // Delete the draft
       await this.deleteDraft(draft.id);
@@ -491,7 +622,13 @@ export class EmailService {
 
   async fetchBackendDrafts(): Promise<any[]> {
     try {
-      const res = await fetch('/api/users/1/drafts');
+      const userId = await this.ensureBackendUserId();
+
+      if (!userId) {
+        return [];
+      }
+
+      const res = await fetch(`/api/users/${userId}/drafts`);
       const data = await res.json();
       return data.drafts || [];
     } catch (err) {
@@ -529,6 +666,55 @@ export class EmailService {
 
     this.drafts.set(mergedDrafts);
     localStorage.setItem('email-drafts', JSON.stringify(mergedDrafts));
+  }
+
+  async fetchBackendSentEmails(): Promise<any[]> {
+    try {
+      const userId = await this.ensureBackendUserId();
+
+      if (!userId) {
+        return [];
+      }
+
+      const res = await fetch(`/api/users/${userId}/emails`);
+      const data = await res.json();
+      return data.emails || [];
+    } catch (err) {
+      console.error('Failed to fetch backend sent emails:', err);
+      return [];
+    }
+  }
+
+  async loadAndMergeSentEmails(): Promise<void> {
+    const backendSentEmails = await this.fetchBackendSentEmails();
+    const mergedSentEmails = [...this.sentEmails()];
+
+    backendSentEmails.forEach((emailRecord: any) => {
+      const normalizedEmail = this.toSentEmail(emailRecord);
+      const exists = mergedSentEmails.some((email) => email.id === normalizedEmail.id);
+
+      if (!exists) {
+        mergedSentEmails.push(normalizedEmail);
+      }
+    });
+
+    this.persistSentEmails(
+      mergedSentEmails.sort(
+        (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime(),
+      ),
+    );
+  }
+
+  async deleteSentEmail(emailId: number): Promise<void> {
+    this.persistSentEmails(this.sentEmails().filter((email) => email.id !== emailId));
+
+    try {
+      await fetch(`/api/emails/${emailId}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('Failed to delete backend sent email:', err);
+    }
   }
 
   /**

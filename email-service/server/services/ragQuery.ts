@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { WebSearchService } from './webSearch';
+import { getOllamaBaseUrl, getOllamaGenerateUrl, getOllamaModel } from '../config';
+import { WebSearchError, WebSearchService } from './webSearch';
 
 export interface RAGOptions {
   model?: string;
@@ -8,18 +9,16 @@ export interface RAGOptions {
 }
 
 export class RAGQueryService {
-  private ollamaUrl: string;
-  private model = process.env.OLLAMA_MODEL || 'mistral';
-  private webSearch = new WebSearchService();
+  private readonly ollamaBaseUrl: string;
+  private readonly ollamaGenerateUrl: string;
+  private readonly model: string;
+  private readonly webSearch = new WebSearchService();
   private temperature = 0.7;
 
   constructor() {
-    // Ensure the URL ends with /api/generate
-    let url = process.env.OLLAMA_URL || 'http://localhost:11434/api/generate';
-    if (!url.includes('/api/generate')) {
-      url = url.replace(/\/$/, '') + '/api/generate';
-    }
-    this.ollamaUrl = url;
+    this.ollamaBaseUrl = getOllamaBaseUrl();
+    this.ollamaGenerateUrl = getOllamaGenerateUrl();
+    this.model = getOllamaModel();
   }
 
   async queryWithContext(userQuery: string, options?: RAGOptions): Promise<string> {
@@ -35,7 +34,17 @@ export class RAGQueryService {
         console.log(`[RAG] Query needs web search: "${userQuery}"`);
 
         // Step 2: Fetch web results
-        const webResults = await this.webSearch.searchWeb(userQuery);
+        let webResults = '';
+
+        try {
+          webResults = await this.webSearch.searchWeb(userQuery);
+        } catch (error) {
+          if (error instanceof WebSearchError) {
+            console.warn(`[RAG] Web search unavailable (${error.code}): ${error.message}`);
+          } else {
+            console.warn('[RAG] Web search failed, falling back to direct query:', error);
+          }
+        }
 
         if (webResults) {
           // Step 3: Augment prompt with search results
@@ -67,7 +76,7 @@ Please provide an accurate, well-informed answer based on the search results abo
   private async queryOllama(prompt: string, model: string): Promise<string> {
     try {
       const response = await axios.post(
-        this.ollamaUrl,
+        this.ollamaGenerateUrl,
         {
           model,
           prompt,
@@ -83,18 +92,19 @@ Please provide an accurate, well-informed answer based on the search results abo
     } catch (error) {
       console.error('[Ollama] Query error:', error);
       if (axios.isAxiosError(error) && error.code === 'ECONNREFUSED') {
-        throw new Error('Ollama server not running on ' + this.ollamaUrl);
+        throw new Error('Ollama server not running on ' + this.ollamaGenerateUrl);
       }
       throw error;
     }
   }
 
   private needsWebSearch(query: string): boolean {
+    const currentYear = new Date().getFullYear();
+    const dynamicYears = [currentYear - 1, currentYear, currentYear + 1].map(String);
+
     // List of keywords that indicate time-sensitive queries
     const timeKeywords = [
-      '2024',
-      '2025',
-      '2026',
+      ...dynamicYears,
       'latest',
       'recent',
       'current',
@@ -124,8 +134,7 @@ Please provide an accurate, well-informed answer based on the search results abo
   // Check if Ollama server is available
   async isOllamaAvailable(): Promise<boolean> {
     try {
-      const baseUrl = this.ollamaUrl.replace('/api/generate', '');
-      await axios.get(baseUrl, { timeout: 2000 });
+      await axios.get(this.ollamaBaseUrl, { timeout: 2000 });
       return true;
     } catch {
       return false;
@@ -135,8 +144,7 @@ Please provide an accurate, well-informed answer based on the search results abo
   // Get available models from Ollama
   async getAvailableModels(): Promise<string[]> {
     try {
-      const baseUrl = this.ollamaUrl.replace('/api/generate', '');
-      const response = await axios.get(baseUrl + '/api/tags', {
+      const response = await axios.get(this.ollamaBaseUrl + '/api/tags', {
         timeout: 5000
       });
       return response.data.models?.map((m: any) => m.name) || [];

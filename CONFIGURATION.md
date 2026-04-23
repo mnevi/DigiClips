@@ -53,7 +53,7 @@ Configure backend behavior via environment variables.
 
 ```bash
 export OLLAMA_MODEL=llama2
-export OLLAMA_API_URL=http://localhost:11434
+export OLLAMA_URL=http://localhost:11434
 npm run dev
 ```
 
@@ -63,7 +63,10 @@ Create `email-service/server/.env`:
 
 ```env
 OLLAMA_MODEL=neural-chat
-OLLAMA_API_URL=http://localhost:11434
+OLLAMA_URL=http://localhost:11434
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/digiclips_db"
+SMTP_USER=your_smtp_username_here
+SMTP_PASS=your_smtp_password_here
 PORT=3000
 NODE_ENV=development
 ```
@@ -80,7 +83,14 @@ npm run dev
 OLLAMA_MODEL=mistral
 
 # Ollama server URL (change if running remote Ollama)
-OLLAMA_API_URL=http://localhost:11434
+OLLAMA_URL=http://localhost:11434
+
+# PostgreSQL connection used by Prisma
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/digiclips_db"
+
+# SMTP credentials used by /api/send-email
+SMTP_USER=your_smtp_username_here
+SMTP_PASS=your_smtp_password_here
 
 # Backend port
 PORT=3000
@@ -160,7 +170,7 @@ If Ollama runs on different machine:
 
 ```bash
 # Set remote Ollama server
-export OLLAMA_API_URL=http://192.168.1.100:11434
+export OLLAMA_URL=http://192.168.1.100:11434
 npm run dev
 ```
 

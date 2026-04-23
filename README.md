@@ -1,12 +1,14 @@
 # DigiClips - AI-Powered Email Service
 
-A modern email application with **AI-powered event scraping** using Ollama (free, open-source LLM).
+A modern email application with Ollama-powered content generation, Serper-backed web search, and PostgreSQL persistence for drafts and sent mail.
 
 ## ✨ Features
 
 - 📧 Full-featured email client (compose, inbox, labels)
-- 🤖 **AI event scraping** - Click a button, get AI-generated event summaries
+- 🤖 **AI event scraping and RAG search** - Query Ollama directly or augment answers with live web results
 - 🦙 **Ollama integration** - Local AI (no cloud, no API keys)
+- 🌐 **Serper web search** - Optional modern web search for time-sensitive prompts
+- 🗄️ **PostgreSQL persistence** - Drafts and sent mail sync through Prisma
 - 💾 Draft auto-save
 - 🏷️ Email labels & organization
 - 📎 File attachments
@@ -35,14 +37,18 @@ ollama serve
 pg_ctl start
 ... or some other chosen method compatible with prisma -- DATABASE_URL is defined in .env
 
-# 4. Start Backend (Terminal 2)
+# 4. Configure backend environment
+cd email-service/server
+cp .env.example .env
+
+# 5. Start Backend (Terminal 2)
 cd email-service/server
 npx prisma generate
 npx prisma migrate dev
 npm install
 npm run dev
 
-# 5. Start Frontend (Terminal 3)
+# 6. Start Frontend (Terminal 3)
 cd email-service
 npm install
 ng serve --proxy-config ./proxy.conf.json
@@ -50,11 +56,11 @@ ng serve --proxy-config ./proxy.conf.json
 or
 npm run ng -- serve --proxy-config ./proxy.conf.json
 
-# 6. Open browser
+# 7. Open browser
 # http://localhost:4200
 ```
 
-That's it! You now have a full email app with AI-powered event scraping.
+The backend expects `DATABASE_URL`, SMTP credentials, and the canonical `OLLAMA_URL` setting in `email-service/server/.env`.
 
 ## 🎯 How to Use
 
@@ -64,15 +70,12 @@ That's it! You now have a full email app with AI-powered event scraping.
 4. **Auto-Insert** - Event text inserted into email body
 5. **Send** - Compose and send your email
 
-## 🔧 What's This AI Button?
+## 🔧 AI Search Modes
 
-The "Scrape Current Event" button:
-- ✅ Connects to **local Ollama AI** (not cloud)
-- ✅ Generates unique event information each time
-- ✅ Inserts formatted text into your email
-- ✅ Takes 2-5 seconds
-- ✅ Works completely offline (after setup)
-- ✅ Zero cost
+The compose view now supports two paths:
+- `Scrape Current Event` uses the legacy Ollama endpoint, which is still supported.
+- `Modern Search` uses `POST /api/query` for RAG responses and `POST /api/web-search` for web-only results.
+- Drafts and sent mail are cached in the browser but persisted through the backend.
 
 ## 📚 Documentation
 

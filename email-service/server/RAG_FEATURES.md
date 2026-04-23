@@ -20,7 +20,7 @@ cd /home/mnevi/Projects/DigiClips/email-service/server
 cp .env.example .env
 ```
 
-Default `.env` has Ollama configured locally. No changes needed unless you're using a different setup.
+Default `.env` has Ollama configured locally. Use `OLLAMA_URL` as the canonical setting; `OLLAMA_API_URL` remains a legacy alias for older setups.
 
 ### 2. (Optional) Enable Web Search
 
@@ -32,6 +32,7 @@ To enable web search capabilities:
 4. Edit `.env` and add:
 
 ```env
+OLLAMA_URL=http://localhost:11434
 SERPER_API_KEY=your_api_key_here
 ```
 
